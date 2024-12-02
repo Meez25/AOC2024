@@ -58,6 +58,7 @@ func dayTwo() {
 	lines := bytes.Split(input, []byte("\n"))
 
 	numberOfSafeLevels := 0
+	numberOfSafeLevelsTwo := 0
 
 	for _, v := range lines[:len(lines)-1] {
 		var levels []int
@@ -69,8 +70,35 @@ func dayTwo() {
 		if isLevelSafe(levels) {
 			numberOfSafeLevels = numberOfSafeLevels + 1
 		}
+		if isLevelSafePartTwo(levels) {
+			numberOfSafeLevelsTwo = numberOfSafeLevelsTwo + 1
+		}
 	}
+
 	fmt.Println(numberOfSafeLevels)
+	fmt.Println(numberOfSafeLevelsTwo)
+}
+
+func isLevelSafePartTwo(input []int) bool {
+	lenght := len(input)
+
+	if isLevelSafe(input) {
+		return true
+	}
+	fmt.Println("BASE", input)
+
+	for i := 0; i < lenght; i++ {
+		subslice := OriginalRemoveIndex(input, i)
+		fmt.Println("subslice", subslice, i)
+
+		isSafe := isLevelSafe(subslice)
+		if isSafe {
+			return true
+		}
+
+	}
+
+	return false
 }
 
 func isLevelSafe(input []int) bool {
@@ -100,6 +128,16 @@ func isLevelSafe(input []int) bool {
 	}
 
 	return isLevelSafe
+}
+
+func OriginalRemoveIndex(arr []int, pos int) []int {
+	newarray := []int{}
+	for i := range arr {
+		if i != pos {
+			newarray = append(newarray, arr[i])
+		}
+	}
+	return newarray
 }
 
 func diff(a, b int) int {
