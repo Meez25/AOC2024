@@ -85,11 +85,9 @@ func isLevelSafePartTwo(input []int) bool {
 	if isLevelSafe(input) {
 		return true
 	}
-	fmt.Println("BASE", input)
 
 	for i := 0; i < lenght; i++ {
 		subslice := OriginalRemoveIndex(input, i)
-		fmt.Println("subslice", subslice, i)
 
 		isSafe := isLevelSafe(subslice)
 		if isSafe {
