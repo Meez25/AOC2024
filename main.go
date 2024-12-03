@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"regexp"
 	"slices"
 	"strconv"
 )
 
 func main() {
-	dayTwo()
+	dayThree()
 }
 
 func dayOne() {
@@ -77,6 +78,86 @@ func dayTwo() {
 
 	fmt.Println(numberOfSafeLevels)
 	fmt.Println(numberOfSafeLevelsTwo)
+}
+
+func dayThree() {
+	input, _ := os.ReadFile("day3input.txt")
+	lines := bytes.Split(input, []byte("\n"))
+
+	total := 0
+
+	combined := ""
+
+	for _, line := range lines {
+		combined = combined + string(line)
+	}
+
+	tableOfGoodStuff := extractGoodStuff(combined)
+
+	for _, e := range tableOfGoodStuff {
+		total = total + calculateFromString(e)
+	}
+
+	fmt.Println(total)
+}
+
+func extractGoodStuff(input string) []string {
+	var output []string
+	ignore := false
+	skipTo := 0
+	_ = ignore
+
+	for i, letter := range input {
+		if letter == 'd' {
+			if input[i:i+7] == "don't()" {
+				if !ignore {
+					output = append(output, input[skipTo:i])
+				}
+				ignore = true
+				skipTo = i + 7
+			}
+
+			if input[i:i+4] == "do()" {
+				if !ignore {
+					output = append(output, input[skipTo:i])
+				}
+				ignore = false
+				skipTo = i + 4
+			}
+		}
+
+		if i < skipTo {
+			continue
+		}
+
+		if i == len(input)-1 {
+			if !ignore {
+				output = append(output, input[skipTo:i])
+			}
+		}
+
+	}
+
+	fmt.Println(output)
+
+	return output
+
+}
+
+func calculateFromString(input string) int {
+	total := 0
+	exp := regexp.MustCompile(`mul\(\d{1,3},\d{1,3}\)`)
+	expToGetNumbers := regexp.MustCompile(`(\d{1,3}),(\d{1,3})`)
+
+	tableWithMatch := exp.FindAllString(input, -1)
+
+	for _, v := range tableWithMatch {
+		tableOfDigit := expToGetNumbers.FindAllStringSubmatch(v, -1)
+		firstDigit, _ := strconv.Atoi(tableOfDigit[0][1])
+		secondDigit, _ := strconv.Atoi(tableOfDigit[0][2])
+		total = total + (firstDigit * secondDigit)
+	}
+	return total
 }
 
 func isLevelSafePartTwo(input []int) bool {
