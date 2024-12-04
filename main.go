@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	dayThree()
+	dayFour()
 }
 
 func dayOne() {
@@ -101,6 +101,64 @@ func dayThree() {
 	fmt.Println(total)
 }
 
+func dayFour() {
+	input, _ := os.ReadFile("day4input.txt")
+	lines := bytes.Split(input, []byte("\n"))
+
+	lines = lines[:len(lines)-1]
+
+	match := 0
+
+	for i := 0; i < len(lines); i++ {
+		for y := 0; y < len(lines[i]); y++ {
+			if string(lines[i][y]) == "X" {
+				// Check left
+				if y > 2 && string(lines[i][y-1]) == "M" && string(lines[i][y-2]) == "A" && string(lines[i][y-3]) == "S" {
+					fmt.Println("line:", i, "row:", y)
+					match++
+				}
+				// Check right
+				if y < len(lines[i])-3 && string(lines[i][y+1]) == "M" && string(lines[i][y+2]) == "A" && string(lines[i][y+3]) == "S" {
+					fmt.Println("line:", i, "row:", y)
+					match++
+				}
+				// Check up
+				if i > 2 && string(lines[i-1][y]) == "M" && string(lines[i-2][y]) == "A" && string(lines[i-3][y]) == "S" {
+					fmt.Println("line:", i, "row:", y)
+					match++
+				}
+				// Check down
+				if i < len(lines)-3 && string(lines[i+1][y]) == "M" && string(lines[i+2][y]) == "A" && string(lines[i+3][y]) == "S" {
+					fmt.Println("line:", i, "row:", y)
+					match++
+				}
+				// Check up right
+				if i > 2 && y < len(lines[i])-3 && string(lines[i-1][y+1]) == "M" && string(lines[i-2][y+2]) == "A" && string(lines[i-3][y+3]) == "S" {
+					match++
+					fmt.Println("line:", i, "row:", y)
+				}
+				// Check up left
+				if i > 2 && y > 2 && string(lines[i-1][y-1]) == "M" && string(lines[i-2][y-2]) == "A" && string(lines[i-3][y-3]) == "S" {
+					fmt.Println("line:", i, "row:", y)
+					match++
+				}
+				// Check down right
+				if i < len(lines)-3 && y < len(lines[i])-3 && string(lines[i+1][y+1]) == "M" && string(lines[i+2][y+2]) == "A" && string(lines[i+3][y+3]) == "S" {
+					match++
+					fmt.Println("line:", i, "row:", y)
+				}
+				// Check down left
+				if i < len(lines)-3 && y > 2 && string(lines[i+1][y-1]) == "M" && string(lines[i+2][y-2]) == "A" && string(lines[i+3][y-3]) == "S" {
+					match++
+					fmt.Println("line:", i, "row:", y)
+				}
+			}
+		}
+	}
+
+	fmt.Println(match)
+}
+
 func extractGoodStuff(input string) []string {
 	var output []string
 	ignore := false
@@ -137,8 +195,6 @@ func extractGoodStuff(input string) []string {
 		}
 
 	}
-
-	fmt.Println(output)
 
 	return output
 
