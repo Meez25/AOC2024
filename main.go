@@ -156,7 +156,25 @@ func dayFour() {
 		}
 	}
 
-	fmt.Println(match)
+	matchPart2 := 0
+
+	for i := 0; i < len(lines); i++ {
+		for y := 0; y < len(lines[i]); y++ {
+			if string(lines[i][y]) == "A" {
+				// Check up right
+				if i > 0 && y > 0 && i < len(lines)-1 && y < len(lines[i])-1 {
+					if (string(lines[i-1][y-1]) == "M" && string(lines[i+1][y+1]) == "S") || (string(lines[i-1][y-1]) == "S" && string(lines[i+1][y+1]) == "M") {
+						if (string(lines[i+1][y-1]) == "M" && string(lines[i-1][y+1]) == "S") || (string(lines[i+1][y-1]) == "S" && string(lines[i-1][y+1]) == "M") {
+							matchPart2++
+						}
+					}
+				}
+			}
+		}
+	}
+
+	fmt.Println("part1: ", match)
+	fmt.Println("part2: ", matchPart2)
 }
 
 func extractGoodStuff(input string) []string {
