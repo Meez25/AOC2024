@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	dayFour()
+	dayFive()
 }
 
 func dayOne() {
@@ -175,6 +175,117 @@ func dayFour() {
 
 	fmt.Println("part1: ", match)
 	fmt.Println("part2: ", matchPart2)
+}
+
+func dayFive() {
+	total := 0
+	step2total := 0
+	var instructionsNumber [][]int
+	input, _ := os.ReadFile("day5input.txt")
+	lines := bytes.Split(input, []byte("\n\n"))
+
+	instructions := bytes.Split(lines[0], []byte("\n"))
+	bookToCheck := bytes.Split(lines[1], []byte("\n"))
+
+	bookToCheck = bookToCheck[:len(bookToCheck)-1]
+
+	for _, v := range instructions {
+		tableOfDigitInstruction := bytes.Split(v, []byte("|"))
+		firstPage, _ := strconv.Atoi(string(tableOfDigitInstruction[0]))
+		secondPage, _ := strconv.Atoi(string(tableOfDigitInstruction[1]))
+		instructionsNumber = append(instructionsNumber, []int{firstPage, secondPage})
+	}
+
+	for n, v := range bookToCheck {
+		fmt.Println(n+1, "/", len(bookToCheck))
+		var pages []int
+		arrayOfPages := bytes.Split(v, []byte(","))
+
+		for _, v := range arrayOfPages {
+			digit, _ := strconv.Atoi(string(v))
+			pages = append(pages, digit)
+		}
+
+		// Step 1
+
+		isCorrect, middleNumber1 := checkBookValidity(pages, instructionsNumber)
+		if isCorrect {
+			total = total + middleNumber1
+		} else {
+
+			// Step 2
+			isCorrect, middleNumber2 := sortBook(pages, instructionsNumber)
+			if isCorrect {
+				step2total = step2total + middleNumber2
+			}
+		}
+	}
+
+	fmt.Println(total)
+	fmt.Println(step2total)
+}
+
+func sortBook(book []int, instructions [][]int) (bool, int) {
+	pages := book
+	for i, v := range pages {
+		// If both number from the instructions are in the book, check if the right side of the instruction doesn't exist in the following numbers, if so, the book is invalid
+		for _, instruction := range instructions {
+			if v == instruction[0] {
+				sorted := false
+				for !sorted {
+					sorted, _ = checkBookValidity(pages, instructions)
+					if !slices.Contains(pages[i:], instruction[1]) && slices.Contains(pages, instruction[0]) && slices.Contains(pages, instruction[1]) {
+						// fmt.Println("Not correct, switching", instruction[0], "and", instruction[1])
+						// Try switching both values from the pages
+						// indexFirstDigit := slices.Index(pages, instruction[0])
+						indexSecondDigit := slices.Index(pages, instruction[1])
+						pages[i] = instruction[1]
+						pages[indexSecondDigit] = instruction[0]
+					} else {
+						sorted = true
+					}
+				}
+			}
+			if v == instruction[1] {
+				sorted := false
+				for !sorted {
+					sorted, _ = checkBookValidity(pages, instructions)
+					if !slices.Contains(pages[:len(pages)-i], instruction[1]) && slices.Contains(pages, instruction[0]) && slices.Contains(pages, instruction[1]) {
+						// fmt.Println("Not correct, switching", instruction[0], "and", instruction[1])
+						// Try switching both values from the pages
+						indexFirstDigit := slices.Index(pages, instruction[0])
+						// indexSecondDigit := slices.Index(pages, instruction[1])
+						pages[i] = instruction[0]
+						pages[indexFirstDigit] = instruction[1]
+					} else {
+						sorted = true
+					}
+				}
+			}
+		}
+	}
+	fmt.Println(pages)
+	return true, pages[len(pages)/2]
+}
+
+func checkBookValidity(book []int, instructions [][]int) (bool, int) {
+	var pages = book
+
+	for i, v := range pages {
+		// If both number from the instructions are in the book, check if the right side of the instruction doesn't exist in the following numbers, if so, the book is invalid
+		for _, instruction := range instructions {
+			if v == instruction[0] {
+				if !slices.Contains(pages[i:], instruction[1]) && slices.Contains(pages, instruction[0]) && slices.Contains(pages, instruction[1]) {
+					// Try switching both values from the pages
+					return false, 0
+				}
+			}
+		}
+	}
+
+	middlePage := pages[len(pages)/2]
+
+	return true, middlePage
 }
 
 func extractGoodStuff(input string) []string {
