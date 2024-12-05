@@ -299,49 +299,6 @@ func (g Graph) TopologicalSort() []int {
 	return ordered
 }
 
-func sortBook(book []int, instructions [][]int) (bool, int) {
-	pages := book
-	for i, v := range pages {
-		// If both number from the instructions are in the book, check if the right side of the instruction doesn't exist in the following numbers, if so, the book is invalid
-		for _, instruction := range instructions {
-			if v == instruction[0] {
-				sorted := false
-				for !sorted {
-					sorted, _ = checkBookValidity(pages, instructions)
-					if !slices.Contains(pages[i:], instruction[1]) && slices.Contains(pages, instruction[0]) && slices.Contains(pages, instruction[1]) {
-						// fmt.Println("Not correct, switching", instruction[0], "and", instruction[1])
-						// Try switching both values from the pages
-						// indexFirstDigit := slices.Index(pages, instruction[0])
-						indexSecondDigit := slices.Index(pages, instruction[1])
-						pages[i] = instruction[1]
-						pages[indexSecondDigit] = instruction[0]
-					} else {
-						sorted = true
-					}
-				}
-			}
-			if v == instruction[1] {
-				sorted := false
-				for !sorted {
-					sorted, _ = checkBookValidity(pages, instructions)
-					if !slices.Contains(pages[:len(pages)-i], instruction[1]) && slices.Contains(pages, instruction[0]) && slices.Contains(pages, instruction[1]) {
-						// fmt.Println("Not correct, switching", instruction[0], "and", instruction[1])
-						// Try switching both values from the pages
-						indexFirstDigit := slices.Index(pages, instruction[0])
-						// indexSecondDigit := slices.Index(pages, instruction[1])
-						pages[i] = instruction[0]
-						pages[indexFirstDigit] = instruction[1]
-					} else {
-						sorted = true
-					}
-				}
-			}
-		}
-	}
-	fmt.Println(pages)
-	return true, pages[len(pages)/2]
-}
-
 func checkBookValidity(book []int, instructions [][]int) (bool, int) {
 	var pages = book
 
