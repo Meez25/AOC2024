@@ -196,8 +196,7 @@ func dayFive() {
 		instructionsNumber = append(instructionsNumber, []int{firstPage, secondPage})
 	}
 
-	for n, v := range bookToCheck {
-		fmt.Println(n+1, "/", len(bookToCheck))
+	for _, v := range bookToCheck {
 		var pages []int
 		arrayOfPages := bytes.Split(v, []byte(","))
 
@@ -214,15 +213,90 @@ func dayFive() {
 		} else {
 
 			// Step 2
-			isCorrect, middleNumber2 := sortBook(pages, instructionsNumber)
-			if isCorrect {
-				step2total = step2total + middleNumber2
+			graph := buildGraph(pages, instructionsNumber)
+			order := graph.TopologicalSort()
+			// Remove useless nodes from book
+			var finalSort []int
+			for _, v := range order {
+				if slices.Contains(pages, v) {
+					finalSort = append(finalSort, v)
+				}
+			}
+			if len(finalSort) > 0 {
+				step2total = step2total + finalSort[len(finalSort)/2]
 			}
 		}
 	}
 
 	fmt.Println(total)
 	fmt.Println(step2total)
+}
+
+type Node struct {
+	Name     int
+	Children []*Node
+}
+
+type Graph struct {
+	nodes map[int]*Node
+}
+
+func buildGraph(pages []int, instructions [][]int) Graph {
+	var graph Graph
+	graph.nodes = make(map[int]*Node)
+
+	// Create nodes
+	for _, page := range pages {
+		graph.nodes[page] = &Node{Name: page}
+	}
+
+	// Add edges only if both pages exist
+	for _, v := range instructions {
+		if _, exists1 := graph.nodes[v[0]]; exists1 {
+			if _, exists2 := graph.nodes[v[1]]; exists2 {
+				graph.nodes[v[0]].Children = append(graph.nodes[v[0]].Children, graph.nodes[v[1]])
+			}
+		}
+	}
+	return graph
+}
+
+func (g Graph) TopologicalSort() []int {
+	var ordered []int
+	var roots []Node
+	incomingEdges := make(map[int]int)
+
+	// Count incoming edges
+	for _, node := range g.nodes {
+		for _, child := range node.Children {
+			incomingEdges[child.Name]++
+		}
+	}
+
+	// Find initial roots
+	for name, node := range g.nodes {
+		if incomingEdges[name] == 0 {
+			roots = append(roots, *node)
+		}
+	}
+
+	// Process nodes
+	for len(roots) > 0 {
+		// Remove and process current root
+		node := roots[len(roots)-1]
+		roots = roots[:len(roots)-1]
+		ordered = append(ordered, node.Name)
+
+		// Process children
+		for _, child := range node.Children {
+			incomingEdges[child.Name]--
+			if incomingEdges[child.Name] == 0 {
+				roots = append(roots, *child)
+			}
+		}
+	}
+
+	return ordered
 }
 
 func sortBook(book []int, instructions [][]int) (bool, int) {
