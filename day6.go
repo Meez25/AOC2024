@@ -9,7 +9,6 @@ import (
 )
 
 func daySix() {
-	// Visited map[]Points
 	input, _ := os.ReadFile("day6input.txt")
 	lines := bytes.Split(input, []byte("\n"))
 
@@ -36,6 +35,7 @@ func daySix() {
 				guard.initialX = x
 				guard.initialY = y
 				guard.initialDirection = guard.direction
+				guard.states = make(map[int]State)
 			}
 			if string(digit) == "#" {
 				guard.obstacle = append(guard.obstacle, formatPoints(x, y))
@@ -45,43 +45,48 @@ func daySix() {
 	}
 
 	// Show guard info
+	guard.states[0] = State{direction: guard.direction, positionX: guard.positionX, positionY: guard.positionY}
 
 	// Move guard
 	for guard.positionY > 0 && guard.positionY < len(lines) && guard.positionX > 0 && guard.positionX < len(lines[0]) {
+		// Save each position
+		guard.states[len(guard.visitedPoints)] = State{direction: guard.direction, positionX: guard.positionX, positionY: guard.positionY}
 		err := guard.move()
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
-	fmt.Println(len(guard.visitedPoints) - 1)
+	fmt.Println("step 1 :", len(guard.visitedPoints)-1)
 	visitedPoints := guard.visitedPoints
 
 	// PART 2
 	// Now that I have all the visitedPoints, I can try to put an obstacle after each points, and check if a loop happens
 
 	timesInLoop := 0
-Outer:
 	for i := range visitedPoints {
-		fmt.Println(i)
-		guard.resetSimulation()
-		if visitedPoints[i] == formatPoints(guard.initialX, guard.positionY) {
-			continue Outer
+		if i%100 == 0 {
+			fmt.Println(i)
 		}
-		if i < len(visitedPoints)-1 {
-			guard.obstacle = append(guard.obstacle, visitedPoints[i])
-			for guard.positionY > 0 && guard.positionY < len(lines) && guard.positionX > 0 && guard.positionX < len(lines[0]) {
-				err := guard.move()
-				if err != nil {
-					fmt.Println(err)
-					timesInLoop++
-					break
-				}
+		if i > 0 {
+			guard.loadState(i)
+		}
+		// Should load state from the first pass
+		if visitedPoints[i] == formatPoints(guard.initialX, guard.initialY) {
+			continue
+		}
+		guard.obstacle = append(guard.obstacle, visitedPoints[i])
+		for guard.positionY > 0 && guard.positionY < len(lines) && guard.positionX > 0 && guard.positionX < len(lines[0]) {
+			err := guard.move()
+			if err != nil {
+				// fmt.Println(err)
+				timesInLoop++
+				break
 			}
-			continue Outer
 		}
+		continue
 	}
 
-	fmt.Println(timesInLoop)
+	fmt.Println("step 2:", timesInLoop)
 
 }
 
@@ -103,12 +108,29 @@ type Guard struct {
 	initialY         int
 	initialDirection string
 	initialObstacle  []string
+	states           map[int]State
+}
+
+type State struct {
+	direction string
+	positionX int
+	positionY int
 }
 
 func (g *Guard) resetSimulation() {
 	g.direction = g.initialDirection
 	g.positionX = g.initialX
 	g.positionY = g.initialY
+	g.obstacle = g.initialObstacle
+	g.iVeBeenHereHmmm = nil
+	g.visitedPoints = nil
+}
+
+func (g *Guard) loadState(i int) {
+	state := g.states[i-1]
+	g.direction = state.direction
+	g.positionX = state.positionX
+	g.positionY = state.positionY
 	g.obstacle = g.initialObstacle
 	g.iVeBeenHereHmmm = nil
 	g.visitedPoints = nil
@@ -156,8 +178,6 @@ func (g *Guard) amILooping() bool {
 		if firstTime == 0 {
 			firstTime = slices.Index(g.iVeBeenHereHmmm[1:], g.iVeBeenHereHmmm[len(g.iVeBeenHereHmmm)-1])
 		}
-		// fmt.Println("I already saw", g.iVeBeenHereHmmm[len(g.iVeBeenHereHmmm)-1], "at position", firstTime)
-		// fmt.Println(g.iVeBeenHereHmmm[firstTime-1], firstTime, g.iVeBeenHereHmmm[firstTime-1], g.iVeBeenHereHmmm[len(g.iVeBeenHereHmmm)-2], firstTime != len(g.iVeBeenHereHmmm)-1)
 		if firstTime != -1 && firstTime != 0 && g.iVeBeenHereHmmm[firstTime-1] == g.iVeBeenHereHmmm[len(g.iVeBeenHereHmmm)-2] && firstTime != len(g.iVeBeenHereHmmm)-1 {
 			return true
 		}
