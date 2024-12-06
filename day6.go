@@ -65,7 +65,7 @@ func daySix() {
 	timesInLoop := 0
 	for i := range visitedPoints {
 		if i%100 == 0 {
-			fmt.Println(i)
+			fmt.Println(i, "/", len(visitedPoints))
 		}
 		if i > 0 {
 			guard.loadState(i)
