@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 )
 
 func daySeven() {
+	start := time.Now()
 	input, _ := os.ReadFile("day7input.txt")
 	trimmed := bytes.TrimSpace(input)
 	lines := bytes.Split(trimmed, []byte("\n"))
@@ -17,16 +19,23 @@ func daySeven() {
 
 	for _, line := range lines {
 		toGet, numbers := parseInput(line)
-		// fmt.Println(toGet, numbers)
 		if isPossible(toGet, numbers) {
 			result += toGet
 		}
+	}
+	fmt.Println("part1 :", result)
+	elapsed := time.Since(start)
+	fmt.Println(elapsed)
+
+	for _, line := range lines {
+		toGet, numbers := parseInput(line)
 		if isPossibleP2(toGet, numbers) {
 			resultP2 += toGet
 		}
 	}
-	fmt.Println("part1 :", result)
 	fmt.Println("part2 :", resultP2)
+	elapsed = time.Since(start)
+	fmt.Println(elapsed)
 }
 
 func parseInput(input []byte) (int, []int) {
@@ -108,6 +117,9 @@ func generateCombinations(n int) [][]string {
 			newComb := append(append([]string{}, p...), op)
 			result = append(result, newComb)
 		}
+	}
+	if n == 2 {
+		fmt.Println(result)
 	}
 	return result
 }
