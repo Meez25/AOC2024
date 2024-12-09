@@ -29,6 +29,7 @@ func dayEight() {
 		for x, char := range line {
 			if string(char) != "." {
 				nodes[string(char)] = append(nodes[string(char)], Point{x: x, y: y})
+				antiNodes = append(antiNodes, Point{x: x, y: y})
 			}
 		}
 	}
@@ -44,17 +45,28 @@ func dayEight() {
 				fmt.Println("compared with", v[j])
 				antiNodeX := v[i].x + (v[i].x - v[j].x)
 				antiNodeY := v[i].y + (v[i].y - v[j].y)
-				fmt.Println(antiNodeX, antiNodeY)
-				if antiNodeX < maxXGrid && antiNodeX >= 0 && antiNodeY >= 0 && antiNodeY < maxYGrid {
-					newAntiNode := Point{x: antiNodeX, y: antiNodeY}
-					if !slices.Contains(antiNodes, newAntiNode) {
-						antiNodes = append(antiNodes, newAntiNode)
+
+				differenceX := v[i].x - v[j].x
+				differenceY := v[i].y - v[j].y
+
+				computedX := antiNodeX
+				computedY := antiNodeY
+
+				for computedX < maxXGrid && computedX >= 0 && computedY < maxYGrid && computedY >= 0 {
+					if antiNodeX < maxXGrid && antiNodeX >= 0 && antiNodeY >= 0 && antiNodeY < maxYGrid {
+						newAntiNode := Point{x: computedX, y: computedY}
+						if !slices.Contains(antiNodes, newAntiNode) {
+							antiNodes = append(antiNodes, newAntiNode)
+						}
+						computedX += differenceX
+						computedY += differenceY
 					}
 				}
 			}
 		}
 	}
 
+	fmt.Println(antiNodes)
 	fmt.Println(len(antiNodes))
 
 }
