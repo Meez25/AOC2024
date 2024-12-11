@@ -12,25 +12,39 @@ func dayEleven() {
 	trimmed := bytes.TrimSpace(input)
 	lines := bytes.Split(trimmed, []byte(" "))
 
-	stonesList := make([]int, 0)
+	// stonesList := make([]int, 0)
+
+	stonesMap := make(map[int]int, 0)
 
 	for _, v := range lines {
 		asInt, _ := strconv.Atoi(string(v))
-		stonesList = append(stonesList, asInt)
+		// stonesList = append(stonesList, asInt)
+		stonesMap[asInt]++
 	}
 
-	for i := 0; i < 35; i++ {
-		stonesList = blink(stonesList)
-		fmt.Println(i, len(stonesList))
+	// fmt.Println("PART 1")
+	// for i := 0; i < 25; i++ {
+	// 	stonesList = blink(stonesList)
+	// 	fmt.Println(i, len(stonesList))
+	// }
+
+	fmt.Println("PART 2")
+
+	count := 0
+	for i := 0; i < 75; i++ {
+		stonesMap = blinkMap(stonesMap)
+		// fmt.Println(i, len(stonesMap))
 	}
+
+	for _, v := range stonesMap {
+		count += v
+	}
+	// fmt.Println(stonesMap)
+	fmt.Println(count)
 
 }
 
 func blink(stonesList []int) []int {
-
-	// If the stone is engraved with the number 0, it is replaced by a stone engraved with the number 1.
-	// If the stone is engraved with a number that has an even number of digits, it is replaced by two stones. The left half of the digits are engraved on the new left stone, and the right half of the digits are engraved on the new right stone. (The new numbers don't keep extra leading zeroes: 1000 would become stones 10 and 0.)
-	// If none of the other rules apply, the stone is replaced by a new stone; the old stone's number multiplied by 2024 is engraved on the new stone.
 
 	i := 0
 	j := len(stonesList) - 1
@@ -48,12 +62,31 @@ func blink(stonesList []int) []int {
 			stonesList = append(stonesList, toInsert...)
 			stonesList = removeWithoutOrder(stonesList, i)
 			i++
-			continue
 		}
 		stonesList[i] = stone * 2024
 		i++
 	}
 	return stonesList
+}
+
+func blinkMap(stonesMap map[int]int) map[int]int {
+	secondMap := make(map[int]int, len(stonesMap))
+
+	for k, v := range stonesMap {
+		if k == 0 {
+			secondMap[1] = v + secondMap[1]
+			continue
+		}
+		if lenItoa(k)%2 == 0 {
+			toInsert := cutIntInHalf(k)
+			secondMap[toInsert[0]] = v + secondMap[toInsert[0]]
+			secondMap[toInsert[1]] = v + secondMap[toInsert[1]]
+			continue
+		} else {
+			secondMap[k*2024] += v
+		}
+	}
+	return secondMap
 }
 
 func lenItoa(i int) int {
