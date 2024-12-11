@@ -12,61 +12,23 @@ func dayEleven() {
 	trimmed := bytes.TrimSpace(input)
 	lines := bytes.Split(trimmed, []byte(" "))
 
-	// stonesList := make([]int, 0)
-
 	stonesMap := make(map[int]int, 0)
 
 	for _, v := range lines {
 		asInt, _ := strconv.Atoi(string(v))
-		// stonesList = append(stonesList, asInt)
 		stonesMap[asInt]++
 	}
-
-	// fmt.Println("PART 1")
-	// for i := 0; i < 25; i++ {
-	// 	stonesList = blink(stonesList)
-	// 	fmt.Println(i, len(stonesList))
-	// }
-
-	fmt.Println("PART 2")
 
 	count := 0
 	for i := 0; i < 75; i++ {
 		stonesMap = blinkMap(stonesMap)
-		// fmt.Println(i, len(stonesMap))
 	}
 
 	for _, v := range stonesMap {
 		count += v
 	}
-	// fmt.Println(stonesMap)
 	fmt.Println(count)
 
-}
-
-func blink(stonesList []int) []int {
-
-	i := 0
-	j := len(stonesList) - 1
-	for i <= j {
-		// Apply rules
-		stone := stonesList[i]
-
-		if stone == 0 {
-			stonesList[i] = 1
-			i++
-			continue
-		}
-		if lenItoa(stone)%2 == 0 {
-			toInsert := cutIntInHalf(stone)
-			stonesList = append(stonesList, toInsert...)
-			stonesList = removeWithoutOrder(stonesList, i)
-			i++
-		}
-		stonesList[i] = stone * 2024
-		i++
-	}
-	return stonesList
 }
 
 func blinkMap(stonesMap map[int]int) map[int]int {
