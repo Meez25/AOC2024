@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"slices"
 	"strconv"
 )
 
@@ -20,42 +19,41 @@ func dayEleven() {
 		stonesList = append(stonesList, asInt)
 	}
 
-	for i := 0; i < 25; i++ {
+	for i := 0; i < 35; i++ {
 		stonesList = blink(stonesList)
+		fmt.Println(i, len(stonesList))
 	}
-	fmt.Println(len(stonesList))
 
 }
 
 func blink(stonesList []int) []int {
-	copyStone := slices.Clone(stonesList)
 
 	// If the stone is engraved with the number 0, it is replaced by a stone engraved with the number 1.
 	// If the stone is engraved with a number that has an even number of digits, it is replaced by two stones. The left half of the digits are engraved on the new left stone, and the right half of the digits are engraved on the new right stone. (The new numbers don't keep extra leading zeroes: 1000 would become stones 10 and 0.)
 	// If none of the other rules apply, the stone is replaced by a new stone; the old stone's number multiplied by 2024 is engraved on the new stone.
 
 	i := 0
-	for i < len(copyStone) {
-		stone := copyStone[i]
+	j := len(stonesList) - 1
+	for i <= j {
 		// Apply rules
+		stone := stonesList[i]
 
 		if stone == 0 {
-			copyStone[i] = 1
+			stonesList[i] = 1
 			i++
 			continue
 		}
 		if lenItoa(stone)%2 == 0 {
 			toInsert := cutIntInHalf(stone)
-			copyStone = slices.Insert(copyStone, i, toInsert...)
-			copyStone = slices.Delete(copyStone, i+2, i+3)
-			i = i + 2
+			stonesList = append(stonesList, toInsert...)
+			stonesList = removeWithoutOrder(stonesList, i)
+			i++
 			continue
 		}
-		copyStone[i] = stone * 2024
+		stonesList[i] = stone * 2024
 		i++
 	}
-
-	return copyStone
+	return stonesList
 }
 
 func lenItoa(i int) int {
@@ -71,4 +69,9 @@ func cutIntInHalf(input int) []int {
 	asIntSecond, _ := strconv.Atoi(secondPart)
 
 	return []int{asIntFirst, asIntSecond}
+}
+
+func removeWithoutOrder(s []int, i int) []int {
+	s[i] = s[len(s)-1]
+	return s[:len(s)-1]
 }
