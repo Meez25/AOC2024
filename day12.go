@@ -45,7 +45,26 @@ func dayTwelve() {
 		price = price + (region.perimeter * len(region.area))
 	}
 
+	fmt.Println(regions)
 	fmt.Println(price)
+
+	// Part 2
+	fmt.Println("P2")
+	price = 0
+	for _, region := range regions {
+		corner := 0
+		for _, position := range region.area {
+			sum := countCornerOfSquare(lines, position, region.name)
+			if sum > 0 {
+				fmt.Println("Corner added", sum, "at position", position)
+			}
+			corner += sum
+		}
+		fmt.Println(corner, "side for", region.name)
+		price = price + (corner * len(region.area))
+	}
+	fmt.Println(price)
+
 }
 
 func bfs(grid [][]byte, point Point) ([]Point, int) {
@@ -58,10 +77,6 @@ func bfs(grid [][]byte, point Point) ([]Point, int) {
 	marked[point] = true
 
 	region := make([]Point, 0)
-	// AAAA
-	// BBCD
-	// BBCC
-	// EEEC
 
 	for len(queue) > 0 {
 		var next Point
@@ -129,4 +144,47 @@ func bfs(grid [][]byte, point Point) ([]Point, int) {
 	}
 
 	return region, perimeter
+}
+
+func countCornerOfSquare(grid [][]byte, p Point, s string) int {
+	corner := 0
+
+	// Helper function to check if a cell at offset is same type
+	sameCrop := func(dx, dy int) bool {
+		newX, newY := p.x+dx, p.y+dy
+		if newY >= 0 && newY < len(grid) && newX >= 0 && newX < len(grid[0]) {
+			return string(grid[newY][newX]) == s
+		}
+		return false
+	}
+
+	// external corners (where two different types meet)
+	if !sameCrop(0, -1) && !sameCrop(-1, 0) { // top-left
+		corner++
+	}
+	if !sameCrop(0, -1) && !sameCrop(1, 0) { // top-right
+		corner++
+	}
+	if !sameCrop(0, 1) && !sameCrop(-1, 0) { // bottom-left
+		corner++
+	}
+	if !sameCrop(0, 1) && !sameCrop(1, 0) { // bottom-right
+		corner++
+	}
+
+	// internal corners (diagonal gaps)
+	if !sameCrop(-1, -1) && sameCrop(-1, 0) && sameCrop(0, -1) { // top-left
+		corner++
+	}
+	if !sameCrop(1, -1) && sameCrop(1, 0) && sameCrop(0, -1) { // top-right
+		corner++
+	}
+	if !sameCrop(-1, 1) && sameCrop(-1, 0) && sameCrop(0, 1) { // bottom-left
+		corner++
+	}
+	if !sameCrop(1, 1) && sameCrop(1, 0) && sameCrop(0, 1) { // bottom-right
+		corner++
+	}
+
+	return corner
 }
