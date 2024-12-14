@@ -45,11 +45,8 @@ func dayThirteen() {
 		results = regexp.FindAllStringSubmatch(string(lines[2]), -1)
 		prize := prize{X: stringToInt64(results[0][1]), Y: stringToInt64(results[0][2])}
 
-		fmt.Println(firstButton, secondButton, prize)
-
 		// result := solvePuzzle(firstButton, secondButton, prize)
 		result := solvePuzzleP2(firstButton, secondButton, prize)
-		fmt.Println(result)
 		grandTotal += result
 	}
 
