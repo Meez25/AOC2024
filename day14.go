@@ -79,6 +79,7 @@ func (g *Grid) Count() (int, int, int, int) {
 	}
 	return countA, countC, countB, countD
 }
+
 func (g *Grid) IsChristmasTree() bool {
 	emptyLines := 0
 	emptyCol := 0
@@ -175,5 +176,4 @@ func dayFourteen() {
 		}
 		i++
 	}
-
 }
