@@ -215,7 +215,7 @@ func (g Grid) DoInstructionP2(input []Direction) {
 	fmt.Print("\033[H\033[2J")
 	// reader := bufio.NewReader(os.Stdin)
 	for i, instruction := range input {
-		fmt.Printf("\033[H") // Move cursor to top without clearing
+		fmt.Printf("\033[H")
 		fmt.Printf("Move %d/%d: %s\n", i+1, len(input), instruction.toString())
 		if i < len(input)-1 {
 			fmt.Printf("Next move will be: %s\n", input[i+1].toString())
@@ -237,7 +237,7 @@ func (g Grid) DoInstructionP2(input []Direction) {
 								box.p1.y -= 1
 								box.p2.y -= 1
 							}
-							g.robot.position.y -= 1 // Don't forget to move the robot too!
+							g.robot.position.y -= 1
 						}
 					}
 				}
@@ -309,9 +309,8 @@ func (g Grid) DoInstructionP2(input []Direction) {
 		fmt.Printf("\nRobot position: (%d,%d)\n", g.robot.position.x, g.robot.position.y)
 		fmt.Println("----------------------------------------")
 
-		// Small delay to make it visible
-		// fmt.Println("Press any key to continue...")
-		// reader.ReadString('\n') // Wait for Enter key
+		// fmt.Println("ENTER...")
+		// reader.ReadString('\n')
 
 	}
 }
@@ -446,10 +445,8 @@ func (g Grid) IsWall(x, y int) bool {
 func (g Grid) describe() {
 	for y := 0; y < g.height; y++ {
 		for x := 0; x < g.width; x++ {
-			// Start by assuming this position is empty
 			char := "."
 
-			// Check if it's a wall (assuming walls are at the borders)
 			if x == 0 || x == g.width-1 || y == 0 || y == g.height-1 {
 				char = "#"
 			}
@@ -609,11 +606,10 @@ func (g Grid) nextFreePositionP2(x, y int, direction Direction) (position, error
 		}
 	}
 	if direction == LEFT {
-		for i := x; i > 1; i-- { // Note: i > 1 because we need two spaces
+		for i := x; i > 1; i-- {
 			if g.isLocationFree(i, y) && g.isLocationFree(i-1, y) {
 				return position{i - 1, y}, nil
 			}
-			// Check for walls and return error if we hit one
 			for _, bigWall := range g.bigWalls {
 				if (bigWall.p1.x == i && bigWall.p1.y == y) ||
 					(bigWall.p2.x == i && bigWall.p2.y == y) {
@@ -630,7 +626,6 @@ func (g Grid) canBoxMove(big bigboxes, direction Direction) (bool, []*bigboxes) 
 	marked := make(map[*bigboxes]bool)
 	queue := make([]*bigboxes, 0)
 
-	// Find the initial box pointer
 	var startBox *bigboxes
 	for _, b := range g.bigBoxes {
 		if b.p1 == big.p1 && b.p2 == big.p2 {
