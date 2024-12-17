@@ -19,11 +19,40 @@ func main() {
 		int, _ := strconv.Atoi(string(programList[i]))
 		program[i] = int
 	}
-	var startA int64
-	startA = (((((((((((((43*8+2)*8+2)*8+3)*8+5)*8+3)*8+7)*8+2)*8+7)*8+2)*8+3)*8+6)*8)*8+1)*8 + 7
-	c := computer{A: startA, B: 0, C: 0, pointer: 0, program: program}
+	c := computer{A: 0, B: 0, C: 0, pointer: 0, program: program}
 	c.start()
-	fmt.Println(startA, c.display())
+	fmt.Println(c.A, c.display())
+
+	var a int64
+	for i := len(program) - 1; i >= 0; i-- {
+		a <<= 3
+
+		// Try values 0-7 until we find one that produces correct output
+		for b := int64(0); b < 8; b++ {
+			candidate := a + b
+			c := computer{A: candidate, B: 0, C: 0, pointer: 0, program: program}
+			c.start()
+
+			// Check if output matches expected program slice
+			if matchesProgram(c.output, program[i:]) {
+				a = candidate
+				break
+			}
+		}
+	}
+	fmt.Println("P2 :", a)
+
+}
+func matchesProgram(output []int, expected []int) bool {
+	if len(output) != len(expected) {
+		return false
+	}
+	for i := range output {
+		if output[i] != expected[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func (c *computer) display() string {
