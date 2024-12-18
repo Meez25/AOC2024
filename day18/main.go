@@ -3,6 +3,10 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"image"
+	"image/color"
+	"image/gif"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -56,6 +60,11 @@ func main() {
 	// BFS to find exit
 	successNodes := BFS(grid)
 	path := successNodes[0].path
+
+	err := generateGIF(grid, path, inputFile)
+	if err != nil {
+		fmt.Printf("Error generating GIF: %v\n", err)
+	}
 
 	elapsed := time.Since(start)
 	fmt.Println("Part 1 :", len(successNodes[0].path), "in", elapsed)
@@ -124,6 +133,7 @@ func BFS(grid [][]string) []Node {
 
 	queue = append(queue, startNode)
 	visited[Position{x: 0, y: 0}] = true
+	startNode.path = append(startNode.path, Position{x: 0, y: 0})
 
 	for len(queue) > 0 {
 		v := queue[0]
@@ -195,4 +205,187 @@ func BFS(grid [][]string) []Node {
 		}
 	}
 	return successNode
+}
+
+func drawPoint(img *image.Paletted, x, y, size int, c color.Color) {
+	for dy := -size; dy <= size; dy++ {
+		for dx := -size; dx <= size; dx++ {
+			if dx*dx+dy*dy <= size*size {
+				img.Set(x+dx, y+dy, c)
+			}
+		}
+	}
+}
+
+func generateGIF(grid [][]string, initialPath []Position, inputFile string) error {
+	// Constants for the GIF
+	cellSize := 8
+	width := len(grid[0]) * cellSize
+	height := len(grid) * cellSize
+	delay := 1
+	pathSize := 3
+	endpointSize := 4
+	criticalPause := 100 // Long pause before path gets cut
+
+	palette := []color.Color{
+		color.White,
+		color.Black,
+		color.RGBA{255, 0, 0, 255},
+		color.RGBA{64, 192, 87, 255},
+		color.RGBA{250, 82, 82, 255},
+		color.RGBA{255, 165, 0, 255},
+	}
+
+	var frames []*image.Paletted
+	var delays []int
+
+	baseImg := image.NewPaletted(image.Rect(0, 0, width, height), palette)
+	drawBackground(baseImg, grid, cellSize, palette)
+	currentPath := initialPath
+	drawFullPath(baseImg, currentPath, cellSize, palette, pathSize, endpointSize)
+
+	initialFrame := image.NewPaletted(baseImg.Bounds(), palette)
+	copy(initialFrame.Pix, baseImg.Pix)
+	frames = append(frames, initialFrame)
+	delays = append(delays, 50)
+
+	currentGrid := make([][]string, len(grid))
+	for i := range grid {
+		currentGrid[i] = make([]string, len(grid[i]))
+		copy(currentGrid[i], grid[i])
+	}
+
+	var allFallingBlocks []Position
+	for _, coord := range strings.Split(strings.TrimSpace(inputFile), "\n")[1024:] {
+		parts := strings.Split(coord, ",")
+		x, y := 0, 0
+		fmt.Sscanf(parts[0]+","+parts[1], "%d,%d", &x, &y)
+		allFallingBlocks = append(allFallingBlocks, Position{x: x, y: y})
+	}
+
+	foundCriticalBlock := false
+	for _, fallingBlock := range allFallingBlocks {
+		// If this block will cut the path, add extra pause frames
+		if slices.Contains(currentPath, fallingBlock) {
+			result := BFS(currentGrid)
+			if len(result) == 0 {
+				// This is the critical block - add pause frames
+				pauseFrame := image.NewPaletted(baseImg.Bounds(), palette)
+				copy(pauseFrame.Pix, baseImg.Pix)
+				frames = append(frames, pauseFrame)
+				delays = append(delays, criticalPause)
+				foundCriticalBlock = true
+			}
+		}
+
+		highlightFrame := image.NewPaletted(baseImg.Bounds(), palette)
+		copy(highlightFrame.Pix, baseImg.Pix)
+		drawBlock(highlightFrame, fallingBlock.x, fallingBlock.y, cellSize, palette[5])
+		frames = append(frames, highlightFrame)
+		delays = append(delays, delay)
+
+		wallFrame := image.NewPaletted(baseImg.Bounds(), palette)
+		copy(wallFrame.Pix, baseImg.Pix)
+		drawBlock(wallFrame, fallingBlock.x, fallingBlock.y, cellSize, palette[1])
+		frames = append(frames, wallFrame)
+		delays = append(delays, delay)
+
+		currentGrid[fallingBlock.y][fallingBlock.x] = "#"
+
+		if slices.Contains(currentPath, fallingBlock) {
+			newFrame := image.NewPaletted(baseImg.Bounds(), palette)
+			drawBackground(newFrame, currentGrid, cellSize, palette)
+
+			result := BFS(currentGrid)
+			if len(result) > 0 {
+				currentPath = result[0].path
+				drawFullPath(newFrame, currentPath, cellSize, palette, pathSize, endpointSize)
+			}
+
+			copy(baseImg.Pix, newFrame.Pix)
+			frames = append(frames, newFrame)
+			delays = append(delays, delay)
+		} else {
+			copy(baseImg.Pix, wallFrame.Pix)
+		}
+
+		// If we've found and processed the critical block, break
+		if foundCriticalBlock {
+			break
+		}
+	}
+
+	// Add final pause
+	finalFrame := image.NewPaletted(baseImg.Bounds(), palette)
+	copy(finalFrame.Pix, frames[len(frames)-1].Pix)
+	frames = append(frames, finalFrame)
+	delays = append(delays, 50)
+
+	f, err := os.Create("path_visualization.gif")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return gif.EncodeAll(f, &gif.GIF{
+		Image: frames,
+		Delay: delays,
+	})
+}
+
+// Helper functions remain the same except for drawFullPath which needs to accept size parameters
+
+func drawSquare(img *image.Paletted, x, y, cellSize int, c color.Color) {
+	// Draw a filled square centered at x,y
+	size := cellSize - 2 // Slightly smaller than cell size to leave a small gap
+	startX := x - size/2
+	startY := y - size/2
+
+	for dy := 0; dy < size; dy++ {
+		for dx := 0; dx < size; dx++ {
+			img.Set(startX+dx, startY+dy, c)
+		}
+	}
+}
+
+func drawFullPath(img *image.Paletted, path []Position, cellSize int, palette []color.Color, pathSize, endpointSize int) {
+	if len(path) == 0 {
+		return
+	}
+
+	// Draw path with solid squares
+	for _, pos := range path {
+		drawSquare(img, pos.x*cellSize+cellSize/2, pos.y*cellSize+cellSize/2, cellSize, palette[2])
+	}
+
+	// Draw start and end points as larger squares
+	drawSquare(img, path[0].x*cellSize+cellSize/2, path[0].y*cellSize+cellSize/2, cellSize+2, palette[3])
+	drawSquare(img, path[len(path)-1].x*cellSize+cellSize/2, path[len(path)-1].y*cellSize+cellSize/2, cellSize+2, palette[4])
+}
+
+// Helper function to draw a block (wall or falling block)
+func drawBlock(img *image.Paletted, x, y, cellSize int, c color.Color) {
+	for dy := 0; dy < cellSize; dy++ {
+		for dx := 0; dx < cellSize; dx++ {
+			img.Set(x*cellSize+dx, y*cellSize+dy, c)
+		}
+	}
+}
+
+func drawBackground(img *image.Paletted, grid [][]string, cellSize int, palette []color.Color) {
+	// Fill background
+	for y := 0; y < img.Bounds().Dy(); y++ {
+		for x := 0; x < img.Bounds().Dx(); x++ {
+			img.Set(x, y, palette[0])
+		}
+	}
+
+	// Draw walls
+	for y := range grid {
+		for x := range grid[y] {
+			if grid[y][x] == "#" {
+				drawBlock(img, x, y, cellSize, palette[1])
+			}
+		}
+	}
 }
