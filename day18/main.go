@@ -52,21 +52,11 @@ func main() {
 	}
 
 	successNodes := BFS(grid)
-	// path := successNodes[0].path
+	path := successNodes[0].path
 
-	// for y := range grid {
-	// 	for x := range grid[y] {
-	// 		for _, position := range path {
-	// 			if y == position.y && x == position.x {
-	// 				grid[position.y][position.x] = "O"
-	// 			}
-	// 		}
-	// 	}
-	// }
-	//
-	// for _, row := range grid {
-	// 	fmt.Println(strings.Join(row, ""))
-	// }
+	for _, row := range grid {
+		fmt.Println(strings.Join(row, ""))
+	}
 
 	// fmt.Println(path)
 	elapsed := time.Since(start)
@@ -101,6 +91,19 @@ func main() {
 
 	elapsed = time.Since(start)
 	fmt.Println("Part 2 :", firstPositionToMatch, elapsed)
+
+	for y := range grid {
+		for x := range grid[y] {
+			for _, position := range path {
+				if y == position.y && x == position.x {
+					grid[position.y][position.x] = "O"
+				}
+			}
+		}
+	}
+	for _, row := range grid {
+		fmt.Println(strings.Join(row, ""))
+	}
 }
 
 func BFS(grid [][]string) []Node {
