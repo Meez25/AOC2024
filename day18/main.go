@@ -47,29 +47,49 @@ func main() {
 		grid[y][x] = "#"
 	}
 
+	// Printing grid
 	for _, row := range grid {
 		fmt.Println(strings.Join(row, ""))
 	}
 
+	// BFS to find exit
 	successNodes := BFS(grid)
 	path := successNodes[0].path
 
+	elapsed := time.Since(start)
+	fmt.Println("Part 1 :", len(successNodes[0].path), "in", elapsed)
+
+	// Part 2, doing BFS for each new corrupted memory
+	firstPosition := Part2(inputFile, path, grid)
+
+	elapsed = time.Since(start)
+	fmt.Println("Part 2 :", firstPosition, elapsed)
+
+	// Printing end grid
+	for y := range grid {
+		for x := range grid[y] {
+			for _, position := range path {
+				if y == position.y && x == position.x {
+					grid[position.y][position.x] = "O"
+				}
+			}
+		}
+	}
 	for _, row := range grid {
 		fmt.Println(strings.Join(row, ""))
 	}
+}
 
-	// fmt.Println(path)
-	elapsed := time.Since(start)
-	fmt.Println("Part 1 :", len(successNodes), "in", elapsed)
-
-	pathAsPosition := make([]Position, len(successNodes[0].path))
-	for i, pos := range successNodes[0].path {
-		position := Position{x: pos.x, y: pos.y}
-		pathAsPosition[i] = position
-	}
+func Part2(inputFile string, path []Position, grid [][]string) Position {
+	pathAsPosition := make([]Position, len(path))
 
 	var firstPositionToMatch Position
 	var allInputFalling []Position
+
+	for i, pos := range path {
+		position := Position{x: pos.x, y: pos.y}
+		pathAsPosition[i] = position
+	}
 
 	for _, coord := range strings.Split(strings.TrimSpace(inputFile), "\n") {
 		parts := strings.Split(coord, ",")
@@ -88,22 +108,7 @@ func main() {
 			break
 		}
 	}
-
-	elapsed = time.Since(start)
-	fmt.Println("Part 2 :", firstPositionToMatch, elapsed)
-
-	for y := range grid {
-		for x := range grid[y] {
-			for _, position := range path {
-				if y == position.y && x == position.x {
-					grid[position.y][position.x] = "O"
-				}
-			}
-		}
-	}
-	for _, row := range grid {
-		fmt.Println(strings.Join(row, ""))
-	}
+	return firstPositionToMatch
 }
 
 func BFS(grid [][]string) []Node {
