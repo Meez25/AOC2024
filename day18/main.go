@@ -105,8 +105,9 @@ func Part2(inputFile string, path []Position, grid [][]string) Position {
 		grid[allInputFalling[i].y][allInputFalling[i].x] = "#"
 		if slices.Contains(path, allInputFalling[i]) {
 			result := BFS(grid)
-			path = result[0].path
-			if len(path) == 0 {
+			if len(result) > 0 {
+				path = result[0].path
+			} else {
 				firstPositionToMatch = allInputFalling[i]
 				break
 			}
