@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 )
@@ -102,10 +103,13 @@ func Part2(inputFile string, path []Position, grid [][]string) Position {
 	i := 1024
 	for i := i; i < len(allInputFalling); i++ {
 		grid[allInputFalling[i].y][allInputFalling[i].x] = "#"
-		resultAfterFalling := BFS(grid)
-		if len(resultAfterFalling) == 0 {
-			firstPositionToMatch = allInputFalling[i]
-			break
+		if slices.Contains(path, allInputFalling[i]) {
+			result := BFS(grid)
+			path = result[0].path
+			if len(path) == 0 {
+				firstPositionToMatch = allInputFalling[i]
+				break
+			}
 		}
 	}
 	return firstPositionToMatch
