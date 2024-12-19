@@ -46,6 +46,8 @@ func Solve(targetTowels [][]byte, towels [][]byte) (int, int) {
 	filteredTowels := make([][]byte, 0, maxFilteredSize)
 	dp := make([]int, 1000)
 
+	// Filter the towels to remove the one we are sure we won't use, because their digits are not
+	// in the target towel
 	for _, targetTowel := range targetTowels {
 		filteredTowels = filteredTowels[:0]
 		targetLen := len(targetTowel)
@@ -68,11 +70,13 @@ func Solve(targetTowels [][]byte, towels [][]byte) (int, int) {
 func howManyPossibilities(targetTowel []byte, towels [][]byte, dp []int) int {
 	targetLen := len(targetTowel)
 
+	// Reuse the dp array for speed ^^'
 	for i := 0; i <= targetLen; i++ {
 		dp[i] = 0
 	}
 	dp[0] = 1
 
+	// The logic is that we first compute the first position, and build on top of the result
 	for i := 0; i < targetLen; i++ {
 		if dp[i] == 0 && i != 0 {
 			continue
