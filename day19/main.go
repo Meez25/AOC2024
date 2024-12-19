@@ -28,15 +28,10 @@ func parseFile(inputFile []byte) ([][]byte, [][]byte) {
 	firstPart := table[0]
 	secondPart := table[1]
 
-	tableOfAvailableTowels := bytes.Split(firstPart, []byte(","))
+	tableOfAvailableTowels := bytes.Split(firstPart, []byte(", "))
 	tableOfTowerToCreate := bytes.Split(secondPart, []byte("\n"))
 
-	trimmedTowels := make([][]byte, len(tableOfAvailableTowels))
-	for i, towel := range tableOfAvailableTowels {
-		trimmedTowels[i] = bytes.TrimSpace(towel)
-	}
-
-	return trimmedTowels, tableOfTowerToCreate
+	return tableOfAvailableTowels, tableOfTowerToCreate
 }
 
 func Solve(targetTowels [][]byte, towels [][]byte) (int, int) {
