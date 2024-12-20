@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"slices"
 	"time"
 )
 
@@ -14,26 +13,35 @@ type Position struct {
 	x, y int
 }
 
-type Queue struct {
-	nodes    [100000]Node // Fixed-size array for better memory characteristics
-	head     int          // Index of the first element
-	tail     int          // Index where the next element will be inserted
-	size     int          // Current number of elements
-	capacity int          // Maximum capacity
+type Shortcut struct {
+	from     Position
+	to       Position
+	distance int
 }
 
-// NewQueue creates a new queue with the specified capacity
+type ReachablePosition struct {
+	pos   Position
+	steps int
+}
+
+type Queue struct {
+	nodes    [500]Node
+	head     int
+	tail     int
+	size     int
+	capacity int
+}
+
 func NewQueue() *Queue {
 	return &Queue{
-		nodes:    [100000]Node{},
+		nodes:    [500]Node{},
 		head:     0,
 		tail:     0,
 		size:     0,
-		capacity: 100000,
+		capacity: 500,
 	}
 }
 
-// Push adds a node to the queue
 func (q *Queue) Push(n Node) bool {
 	if q.size >= q.capacity {
 		return false // Queue is full
@@ -45,7 +53,6 @@ func (q *Queue) Push(n Node) bool {
 	return true
 }
 
-// Pop removes and returns the first node in the queue
 func (q *Queue) Pop() (Node, bool) {
 	if q.size == 0 {
 		return Node{}, false // Queue is empty
@@ -57,35 +64,13 @@ func (q *Queue) Pop() (Node, bool) {
 	return node, true
 }
 
-// Peek returns the first node without removing it
-func (q *Queue) Peek() (Node, bool) {
-	if q.size == 0 {
-		return Node{}, false
-	}
-	return q.nodes[q.head], true
-}
-
-// IsEmpty returns true if the queue has no elements
 func (q *Queue) IsEmpty() bool {
 	return q.size == 0
 }
 
-// Size returns the current number of elements in the queue
-func (q *Queue) Size() int {
-	return q.size
-}
-
-// Clear resets the queue to empty state
-func (q *Queue) Clear() {
-	q.head = 0
-	q.tail = 0
-	q.size = 0
-}
-
 type Node struct {
-	path        []Position
-	position    Position
-	cheatingPos []Position
+	step     int
+	position Position
 }
 
 func (g Grid) Display() {
@@ -144,14 +129,15 @@ func main() {
 	// Parse input grid
 	grid = fillGrid(inputFile, grid)
 
-	p1 := p1(grid)
-
-	// for _, node := range p1 {
-	// 	grid.VisualizeSolution(node.path)
-	// }
-
+	p1 := solve(grid, 2)
 	partOne := time.Since(start)
 	fmt.Println("Part 1:", p1, "in", partOne)
+
+	startp2 := time.Now()
+	p2 := solve(grid, 20)
+	partTwo := time.Since(startp2)
+	fmt.Println("Part 2:", p2, "in", partTwo)
+
 }
 
 func fillGrid(inputFile []byte, grid Grid) Grid {
@@ -164,95 +150,14 @@ func fillGrid(inputFile []byte, grid Grid) Grid {
 	return grid
 }
 
-func createNodeKey(node Node) string {
-	var nextNodekey string
-	if len(node.cheatingPos) == 2 {
-		nextNodekey = fmt.Sprintf("%d,%d,%d,%d,%d,%d", node.position.x, node.position.y, node.cheatingPos[0].x, node.cheatingPos[0].y, node.cheatingPos[1].x, node.cheatingPos[1].y)
-	} else if len(node.cheatingPos) == 1 {
-		nextNodekey = fmt.Sprintf("%d,%d,%d,%d", node.position.x, node.position.y, node.cheatingPos[0].x, node.cheatingPos[0].y)
-	} else {
-		nextNodekey = fmt.Sprintf("%d,%d", node.position.x, node.position.y)
-	}
-	return nextNodekey
-}
-
-func p1(grid Grid) int {
-	startPos, endPos := grid.GetStartAndEndPosition()
-	nodeThatEnded := make([]Node, 0)
+func solve(grid Grid, cheat int) int {
 	baseLinePath := findNoCheating(grid)
-	baseLinePico := len(baseLinePath[0].path)
-	directions := [][]int{
-		{0, 1},  // bottom
-		{0, -1}, // up
-		{1, 0},  // right
-		{-1, 0}, // left
-	}
-	// count := 0
-	startNode := Node{path: make([]Position, 0), position: startPos, cheatingPos: make([]Position, 0)}
-	queue := NewQueue()
-	visited := make(map[string]bool, 2000)
-
-	key := fmt.Sprintf("%d,%d", startNode.position.x, startNode.position.y)
-	queue.Push(startNode)
-	visited[key] = true
-
-	for queue.IsEmpty() {
-		v, _ := queue.Pop()
-		if v.position.x == endPos.x && v.position.y == endPos.y {
-			if baseLinePico > len(v.path) {
-				nodeThatEnded = append(nodeThatEnded, v)
-			}
-			continue
-		}
-		if grid[v.position.y][v.position.x] == '#' && len(v.cheatingPos) == 2 {
-			continue
-		}
-		for _, direction := range directions {
-			nextPosition := Position{x: v.position.x + direction[0], y: v.position.y + direction[1]}
-			if slices.Contains(v.cheatingPos, nextPosition) {
-				continue
-			}
-
-			if nextPosition.x < 0 || nextPosition.x > len(grid[0])-1 || nextPosition.y < 0 || nextPosition.y > len(grid)-1 {
-				continue
-			}
-
-			nextNode := Node{position: nextPosition}
-			nextNode.path = make([]Position, len(v.path))
-			nextNode.cheatingPos = make([]Position, len(v.cheatingPos))
-			copy(nextNode.cheatingPos, v.cheatingPos)
-			copy(nextNode.path, v.path)
-			nextNode.path = append(nextNode.path, nextPosition)
-
-			nextNodekey := createNodeKey(nextNode)
-			if visited[nextNodekey] == false && grid[nextPosition.y][nextPosition.x] != '#' && len(nextNode.path) < baseLinePico {
-				queue.Push(nextNode)
-				visited[nextNodekey] = true
-			}
-
-			if len(v.cheatingPos) < 2 && grid[nextPosition.y][nextPosition.x] == '#' {
-				// Cheating
-				nextCheatingNode := Node{position: nextPosition}
-				nextCheatingNode.path = make([]Position, len(v.path))
-				nextCheatingNode.cheatingPos = make([]Position, len(v.cheatingPos))
-				copy(nextCheatingNode.path, v.path)
-				copy(nextCheatingNode.cheatingPos, v.cheatingPos)
-				nextCheatingNode.path = append(nextCheatingNode.path, nextPosition)
-				nextCheatingNode.cheatingPos = append(nextCheatingNode.cheatingPos, nextPosition)
-
-				nextCheatingNodekey := createNodeKey(nextCheatingNode)
-				if visited[nextCheatingNodekey] == false && len(nextCheatingNode.path) < baseLinePico {
-					queue.Push(nextCheatingNode)
-					visited[nextCheatingNodekey] = true
-				}
-			}
-		}
-	}
+	shortcuts := FindShortcuts(grid, baseLinePath, cheat)
 
 	count := 0
 	timeSaved := 100
-	for _, node := range nodeThatEnded {
-		if len(node.path) < baseLinePico-timeSaved {
+	for _, shortcut := range shortcuts {
+		if shortcut.distance >= timeSaved {
 			count++
 		}
 	}
@@ -260,57 +165,115 @@ func p1(grid Grid) int {
 	return count
 }
 
-func findNoCheating(grid Grid) []Node {
+func findNoCheating(grid Grid) []Position {
 	startPos, endPos := grid.GetStartAndEndPosition()
-	nodeThatEnded := make([]Node, 0)
-	directions := [][]int{
+	x, y := startPos.x, startPos.y
+	directions := [4][2]int{
 		{0, 1},  // bottom
 		{0, -1}, // up
 		{1, 0},  // right
 		{-1, 0}, // left
 	}
-	// count := 0
-	startNode := Node{path: make([]Position, 0), position: startPos, cheatingPos: make([]Position, 0)}
-	queue := NewQueue()
-	visited := make(map[string]bool, 1000)
+	visited := make(map[Position]bool, 1000)
+	path := []Position{startPos}
+	visited[startPos] = true
 
-	key := fmt.Sprintf("%d,%d", startNode.position.x, startNode.position.y)
-	queue.Push(startNode)
-	visited[key] = true
-
-	for !queue.IsEmpty() {
-		v, _ := queue.Pop()
-		if v.position.x == endPos.x && v.position.y == endPos.y {
-			nodeThatEnded = append(nodeThatEnded, v)
-			continue
-		}
-		if grid[v.position.y][v.position.x] == '#' && len(v.cheatingPos) == 2 {
-			continue
-		}
+	for x != endPos.x || y != endPos.y {
+		moved := false
 		for _, direction := range directions {
-			nextPosition := Position{x: v.position.x + direction[0], y: v.position.y + direction[1]}
-			if slices.Contains(v.cheatingPos, nextPosition) {
-				continue
+			newX, newY := x+direction[0], y+direction[1]
+			newPos := Position{x: newX, y: newY}
+
+			if newX >= 0 && newX < len(grid[0]) &&
+				newY >= 0 && newY < len(grid) &&
+				grid[newY][newX] != '#' &&
+				!visited[newPos] {
+				x, y = newX, newY
+				path = append(path, newPos)
+				visited[newPos] = true
+				moved = true
+				break
 			}
+		}
+		if !moved {
+			break
+		}
+	}
+	return path
+}
 
-			if nextPosition.x < 0 || nextPosition.x > len(grid[0])-1 || nextPosition.y < 0 || nextPosition.y > len(grid)-1 {
-				continue
-			}
-
-			nextNode := Node{position: nextPosition}
-			nextNode.path = make([]Position, len(v.path))
-			nextNode.cheatingPos = make([]Position, len(v.cheatingPos))
-			copy(nextNode.cheatingPos, v.cheatingPos)
-			copy(nextNode.path, v.path)
-			nextNode.path = append(nextNode.path, nextPosition)
-
-			nextNodekey := createNodeKey(nextNode)
-			if visited[nextNodekey] == false && grid[nextPosition.y][nextPosition.x] != '#' {
-				queue.Push(nextNode)
-				visited[nextNodekey] = true
+func FindShortcuts(grid Grid, positions []Position, cheatNo int) []Shortcut {
+	var shortcuts []Shortcut
+	for i, pos := range positions {
+		reachable := miniBFS(grid, pos, cheatNo)
+		for _, reach := range reachable {
+			// Look for this position starting after where we would end up after the shortcut
+			startLookingAt := i + reach.steps
+			if startLookingAt < len(positions) {
+				for j := startLookingAt; j < len(positions); j++ {
+					if positions[j] == reach.pos {
+						// We saved: distance in original path - steps taken in shortcut
+						savedSteps := j - i - reach.steps
+						if savedSteps > 0 {
+							shortcuts = append(shortcuts, Shortcut{
+								from:     pos,
+								to:       reach.pos,
+								distance: savedSteps,
+							})
+						}
+						break
+					}
+				}
 			}
 		}
 	}
+	return shortcuts
+}
 
-	return nodeThatEnded
+func miniBFS(grid Grid, position Position, cheatNo int) []ReachablePosition {
+	visited := make(map[Position]bool, 5000)
+	queue := NewQueue()
+	reachablePositions := make([]ReachablePosition, 0, 100)
+	directions := [4][2]int{
+		{0, 1},  // bottom
+		{0, -1}, // up
+		{1, 0},  // right
+		{-1, 0}, // left
+	}
+
+	visited[position] = true
+	queue.Push(Node{position: position, step: 0})
+
+	for !queue.IsEmpty() {
+		v, _ := queue.Pop()
+
+		if v.step >= cheatNo {
+			continue
+		}
+
+		for _, direction := range directions {
+			newX := v.position.x + direction[0]
+			newY := v.position.y + direction[1]
+			newPos := Position{x: newX, y: newY}
+
+			if newX >= 0 && newX < len(grid[0]) &&
+				newY >= 0 && newY < len(grid) &&
+				!visited[newPos] {
+
+				visited[newPos] = true
+				queue.Push(Node{
+					position: newPos,
+					step:     v.step + 1,
+				})
+
+				if grid[newY][newX] != '#' {
+					reachablePositions = append(reachablePositions, ReachablePosition{
+						pos:   newPos,
+						steps: v.step + 1,
+					})
+				}
+			}
+		}
+	}
+	return reachablePositions
 }
