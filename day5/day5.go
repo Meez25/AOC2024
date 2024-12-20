@@ -6,12 +6,14 @@ import (
 	"os"
 	"slices"
 	"strconv"
+	"time"
 )
 
-func dayFive() {
+func main() {
+	start := time.Now()
 	total := 0
 	step2total := 0
-	var instructionsNumber [][]int
+	var instructionsNumber [1176][2]int
 	input, _ := os.ReadFile("day5input.txt")
 	lines := bytes.Split(input, []byte("\n\n"))
 
@@ -20,34 +22,32 @@ func dayFive() {
 
 	bookToCheck = bookToCheck[:len(bookToCheck)-1]
 
-	for _, v := range instructions {
+	for i, v := range instructions {
 		tableOfDigitInstruction := bytes.Split(v, []byte("|"))
 		firstPage, _ := strconv.Atoi(string(tableOfDigitInstruction[0]))
 		secondPage, _ := strconv.Atoi(string(tableOfDigitInstruction[1]))
-		instructionsNumber = append(instructionsNumber, []int{firstPage, secondPage})
+		instructionsNumber[i] = [2]int{firstPage, secondPage}
 	}
 
 	for _, v := range bookToCheck {
-		var pages []int
 		arrayOfPages := bytes.Split(v, []byte(","))
+		pages := make([]int, len(arrayOfPages))
 
-		for _, v := range arrayOfPages {
+		for i, v := range arrayOfPages {
 			digit, _ := strconv.Atoi(string(v))
-			pages = append(pages, digit)
+			pages[i] = digit
 		}
 
 		// Step 1
-
 		isCorrect, middleNumber1 := checkBookValidity(pages, instructionsNumber)
 		if isCorrect {
 			total = total + middleNumber1
 		} else {
-
 			// Step 2
 			graph := buildGraph(pages, instructionsNumber)
 			order := graph.TopologicalSort()
 			// Remove useless nodes from book
-			var finalSort []int
+			finalSort := make([]int, 0, 10)
 			for _, v := range order {
 				if slices.Contains(pages, v) {
 					finalSort = append(finalSort, v)
@@ -59,8 +59,10 @@ func dayFive() {
 		}
 	}
 
-	fmt.Println(total)
-	fmt.Println(step2total)
+	elapsed := time.Since(start)
+	fmt.Println("Part 1 :", total)
+	fmt.Println("Part 2 :", step2total)
+	fmt.Println("In :", elapsed)
 }
 
 type Node struct {
@@ -72,9 +74,9 @@ type Graph struct {
 	nodes map[int]*Node
 }
 
-func buildGraph(pages []int, instructions [][]int) Graph {
+func buildGraph(pages []int, instructions [1176][2]int) Graph {
 	var graph Graph
-	graph.nodes = make(map[int]*Node)
+	graph.nodes = make(map[int]*Node, 100)
 
 	// Create nodes
 	for _, page := range pages {
@@ -93,8 +95,8 @@ func buildGraph(pages []int, instructions [][]int) Graph {
 }
 
 func (g Graph) TopologicalSort() []int {
-	var ordered []int
-	var roots []Node
+	ordered := make([]int, 0, 100)
+	roots := make([]Node, 0, 100)
 	incomingEdges := make(map[int]int)
 
 	// Count incoming edges
@@ -130,9 +132,7 @@ func (g Graph) TopologicalSort() []int {
 	return ordered
 }
 
-func checkBookValidity(book []int, instructions [][]int) (bool, int) {
-	var pages = book
-
+func checkBookValidity(pages []int, instructions [1176][2]int) (bool, int) {
 	for i, v := range pages {
 		// If both number from the instructions are in the book, check if the right side of the instruction doesn't exist in the following numbers, if so, the book is invalid
 		for _, instruction := range instructions {
