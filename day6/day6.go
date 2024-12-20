@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"time"
 )
 
-func daySix() {
+func main() {
+	start := time.Now()
 	input, _ := os.ReadFile("day6input.txt")
 	lines := bytes.Split(input, []byte("\n"))
 
@@ -19,15 +21,15 @@ func daySix() {
 	// Place guard
 	for y, line := range lines {
 		for x, digit := range line {
-			if string(digit) != "." && string(digit) != "#" {
-				switch string(digit) {
-				case ">":
+			if digit != '.' && digit != '#' {
+				switch digit {
+				case '>':
 					guard.direction = "right"
-				case "^":
+				case '^':
 					guard.direction = "up"
-				case "<":
+				case '<':
 					guard.direction = "left"
-				case "v":
+				case 'v':
 					guard.direction = "down"
 				}
 				guard.positionX = x
@@ -35,9 +37,9 @@ func daySix() {
 				guard.initialX = x
 				guard.initialY = y
 				guard.initialDirection = guard.direction
-				guard.states = make(map[int]State)
+				guard.states = make(map[int]State, 100)
 			}
-			if string(digit) == "#" {
+			if digit == '#' {
 				guard.obstacle = append(guard.obstacle, formatPoints(x, y))
 				guard.initialObstacle = guard.obstacle
 			}
@@ -56,7 +58,11 @@ func daySix() {
 			fmt.Println(err)
 		}
 	}
-	fmt.Println("step 1 :", len(guard.visitedPoints)-1)
+
+	elapsed := time.Since(start)
+	fmt.Println("Part 1 :", len(guard.visitedPoints)-1, "in", elapsed)
+	start = time.Now()
+
 	visitedPoints := guard.visitedPoints
 
 	// PART 2
@@ -85,8 +91,8 @@ func daySix() {
 		}
 		continue
 	}
-
-	fmt.Println("step 2:", timesInLoop)
+	elapsed = time.Since(start)
+	fmt.Println("Part 2 :", timesInLoop, "in", elapsed)
 
 }
 
