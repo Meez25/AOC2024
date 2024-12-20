@@ -6,9 +6,11 @@ import (
 	"os"
 	"slices"
 	"strconv"
+	"time"
 )
 
-func dayOne() {
+func main() {
+	start := time.Now()
 	input, _ := os.ReadFile("day1input.txt")
 	lines := bytes.Split(input, []byte("\n"))
 
@@ -34,7 +36,9 @@ func dayOne() {
 		sumDistance = sumDistance + difference
 	}
 
-	fmt.Println(sumDistance)
+	elapsed := time.Since(start)
+	fmt.Println("Part 1 :", sumDistance, "in", elapsed)
+	start = time.Now()
 
 	for _, valueLeft := range leftDigits {
 		found := 0
@@ -46,5 +50,13 @@ func dayOne() {
 		difference = difference + valueLeft*found
 	}
 
-	fmt.Println(difference)
+	elapsed = time.Since(start)
+	fmt.Println("Part 2 :", difference, "in", elapsed)
+}
+
+func diff(a, b int) int {
+	if a < b {
+		return b - a
+	}
+	return a - b
 }
