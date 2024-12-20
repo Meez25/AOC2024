@@ -18,37 +18,37 @@ func main() {
 
 	for i := 0; i < len(lines); i++ {
 		for y := 0; y < len(lines[i]); y++ {
-			if string(lines[i][y]) == "X" {
+			if lines[i][y] == 'X' {
 				// Check left
-				if y > 2 && string(lines[i][y-1]) == "M" && string(lines[i][y-2]) == "A" && string(lines[i][y-3]) == "S" {
+				if y > 2 && lines[i][y-1] == 'M' && lines[i][y-2] == 'A' && lines[i][y-3] == 'S' {
 					match++
 				}
 				// Check right
-				if y < len(lines[i])-3 && string(lines[i][y+1]) == "M" && string(lines[i][y+2]) == "A" && string(lines[i][y+3]) == "S" {
+				if y < len(lines[i])-3 && lines[i][y+1] == 'M' && lines[i][y+2] == 'A' && lines[i][y+3] == 'S' {
 					match++
 				}
 				// Check up
-				if i > 2 && string(lines[i-1][y]) == "M" && string(lines[i-2][y]) == "A" && string(lines[i-3][y]) == "S" {
+				if i > 2 && lines[i-1][y] == 'M' && lines[i-2][y] == 'A' && lines[i-3][y] == 'S' {
 					match++
 				}
 				// Check down
-				if i < len(lines)-3 && string(lines[i+1][y]) == "M" && string(lines[i+2][y]) == "A" && string(lines[i+3][y]) == "S" {
+				if i < len(lines)-3 && lines[i+1][y] == 'M' && lines[i+2][y] == 'A' && lines[i+3][y] == 'S' {
 					match++
 				}
 				// Check up right
-				if i > 2 && y < len(lines[i])-3 && string(lines[i-1][y+1]) == "M" && string(lines[i-2][y+2]) == "A" && string(lines[i-3][y+3]) == "S" {
+				if i > 2 && y < len(lines[i])-3 && lines[i-1][y+1] == 'M' && lines[i-2][y+2] == 'A' && lines[i-3][y+3] == 'S' {
 					match++
 				}
 				// Check up left
-				if i > 2 && y > 2 && string(lines[i-1][y-1]) == "M" && string(lines[i-2][y-2]) == "A" && string(lines[i-3][y-3]) == "S" {
+				if i > 2 && y > 2 && lines[i-1][y-1] == 'M' && lines[i-2][y-2] == 'A' && lines[i-3][y-3] == 'S' {
 					match++
 				}
 				// Check down right
-				if i < len(lines)-3 && y < len(lines[i])-3 && string(lines[i+1][y+1]) == "M" && string(lines[i+2][y+2]) == "A" && string(lines[i+3][y+3]) == "S" {
+				if i < len(lines)-3 && y < len(lines[i])-3 && lines[i+1][y+1] == 'M' && lines[i+2][y+2] == 'A' && lines[i+3][y+3] == 'S' {
 					match++
 				}
 				// Check down left
-				if i < len(lines)-3 && y > 2 && string(lines[i+1][y-1]) == "M" && string(lines[i+2][y-2]) == "A" && string(lines[i+3][y-3]) == "S" {
+				if i < len(lines)-3 && y > 2 && lines[i+1][y-1] == 'M' && lines[i+2][y-2] == 'A' && lines[i+3][y-3] == 'S' {
 					match++
 				}
 			}
@@ -62,11 +62,11 @@ func main() {
 
 	for i := 0; i < len(lines); i++ {
 		for y := 0; y < len(lines[i]); y++ {
-			if string(lines[i][y]) == "A" {
+			if lines[i][y] == 'A' {
 				// Check up right
 				if i > 0 && y > 0 && i < len(lines)-1 && y < len(lines[i])-1 {
-					if (string(lines[i-1][y-1]) == "M" && string(lines[i+1][y+1]) == "S") || (string(lines[i-1][y-1]) == "S" && string(lines[i+1][y+1]) == "M") {
-						if (string(lines[i+1][y-1]) == "M" && string(lines[i-1][y+1]) == "S") || (string(lines[i+1][y-1]) == "S" && string(lines[i-1][y+1]) == "M") {
+					if (lines[i-1][y-1] == 'M' && lines[i+1][y+1] == 'S') || (lines[i-1][y-1] == 'S' && lines[i+1][y+1] == 'M') {
+						if (lines[i+1][y-1] == 'M' && lines[i-1][y+1] == 'S') || (lines[i+1][y-1] == 'S' && lines[i-1][y+1] == 'M') {
 							matchPart2++
 						}
 					}
