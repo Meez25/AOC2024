@@ -18,6 +18,10 @@ func main() {
 	lines = lines[:len(lines)-1]
 	var guard Guard
 
+	guard.obstacle = make([]string, 0, 100)
+	guard.iVeBeenHereHmmm = make([]string, 0, 1000)
+	guard.visitedPoints = make([]string, 0, 1000)
+
 	// Place guard
 	for y, line := range lines {
 		for x, digit := range line {
@@ -46,6 +50,11 @@ func main() {
 		}
 	}
 
+	guard.obstacleMap = make(map[string]bool, len(guard.obstacle))
+	for _, obs := range guard.obstacle {
+		guard.obstacleMap[obs] = true
+	}
+
 	// Show guard info
 	guard.states[0] = State{direction: guard.direction, positionX: guard.positionX, positionY: guard.positionY}
 
@@ -69,27 +78,42 @@ func main() {
 	// Now that I have all the visitedPoints, I can try to put an obstacle after each points, and check if a loop happens
 
 	timesInLoop := 0
-	for i := range visitedPoints {
-		if i%100 == 0 {
-			fmt.Println(i, "/", len(visitedPoints))
+	initialPoint := formatPoints(guard.initialX, guard.initialY)
+
+	chunkSize := 100
+	for i := 0; i < len(visitedPoints); i += chunkSize {
+		end := i + chunkSize
+		if end > len(visitedPoints) {
+			end = len(visitedPoints)
 		}
-		if i > 0 {
-			guard.loadState(i)
-		}
-		// Should load state from the first pass
-		if visitedPoints[i] == formatPoints(guard.initialX, guard.initialY) {
-			continue
-		}
-		guard.obstacle = append(guard.obstacle, visitedPoints[i])
-		for guard.positionY > 0 && guard.positionY < len(lines) && guard.positionX > 0 && guard.positionX < len(lines[0]) {
-			err := guard.move()
-			if err != nil {
-				// fmt.Println(err)
-				timesInLoop++
-				break
+		fmt.Printf("Processing points %d-%d of %d\n", i, end-1, len(visitedPoints))
+
+		for j := i; j < end; j++ {
+			if visitedPoints[j] == initialPoint {
+				continue
+			}
+
+			if j > 0 {
+				guard.loadState(j)
+			}
+
+			guard.obstacleMap[visitedPoints[j]] = true
+			loopFound := false
+
+			for guard.positionY > 0 && guard.positionY < len(lines) && guard.positionX > 0 && guard.positionX < len(lines[0]) {
+				err := guard.move()
+				if err != nil {
+					timesInLoop++
+					loopFound = true
+					break
+				}
+			}
+
+			guard.obstacleMap[visitedPoints[j]] = false
+			if !loopFound {
+				guard.resetSimulation()
 			}
 		}
-		continue
 	}
 	elapsed = time.Since(start)
 	fmt.Println("Part 2 :", timesInLoop, "in", elapsed)
@@ -115,6 +139,7 @@ type Guard struct {
 	initialDirection string
 	initialObstacle  []string
 	states           map[int]State
+	obstacleMap      map[string]bool
 }
 
 type State struct {
@@ -192,7 +217,6 @@ func (g *Guard) amILooping() bool {
 }
 
 func (g *Guard) canMoveFront() (bool, int, int) {
-	var futurePosition string
 	var futureX = g.positionX
 	var futureY = g.positionY
 	switch g.direction {
@@ -206,10 +230,6 @@ func (g *Guard) canMoveFront() (bool, int, int) {
 		futureX--
 	}
 
-	futurePosition = formatPoints(futureX, futureY)
-
-	if slices.Contains(g.obstacle, futurePosition) {
-		return false, 0, 0
-	}
-	return true, futureX, futureY
+	futurePosition := formatPoints(futureX, futureY)
+	return !g.obstacleMap[futurePosition], futureX, futureY
 }
