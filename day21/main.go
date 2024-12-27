@@ -42,28 +42,44 @@ var Directions = [][]int{
 
 func main() {
 	count := 0
+
 	for _, line := range bytes.Split(bytes.TrimSpace(inputFile), []byte("\n")) {
 		digit, _ := strconv.Atoi(string(line[:3]))
+		_ = digit
 		paths := generatePossibilitiesNumericalPad(numericKeypad, line)
 		possibilities := generateString(paths)
-		var secondLevel []string
-		var thirdLevel []string
-		for i := range possibilities {
-			secondLevel = append(secondLevel, generateString(generatePossibilitiesForDirectionalPad(directionalKeypad, possibilities[i]))...)
-		}
-		for i := range secondLevel {
-			thirdLevel = append(thirdLevel, generateString(generatePossibilitiesForDirectionalPad(directionalKeypad, secondLevel[i]))...)
-		}
-		minValue := -1
-		for i := range thirdLevel {
-			if len(thirdLevel[i]) < minValue || minValue == -1 {
-				minValue = len(thirdLevel[i])
-			}
-		}
-		fmt.Println(minValue)
-		count += digit * minValue
+		fmt.Println(possibilities)
+		length := goDeep(possibilities[0], 1)
+		fmt.Println(length)
+		length = goDeep(possibilities[1], 1)
+		fmt.Println(length)
+		length = goDeep(possibilities[2], 1)
+		fmt.Println(length)
+		// With the 3 possibilities, I should create a function that takes the string, and the depth,
+		// And checks resursively for each pair in the string what is the outcome at a deeper depth.
 	}
 	fmt.Println(count)
+}
+
+func goDeep(input string, depth int) int {
+	length := 0
+	if depth == 0 {
+		return len(input)
+	}
+
+	for i := 0; i < len(input)-2; i += 2 {
+		// Generate the new input from the input
+		possibilities := generatePossibilitiesForDirectionalPad(directionalKeypad, input[i:i+2])
+		possibilitiesAsString := generateString(possibilities)
+		for _, possibility := range possibilitiesAsString {
+			for j := 0; j < len(possibility)-2; j += 2 {
+				lengthOfPair := goDeep(possibility[j:j+2], depth-1)
+				length += lengthOfPair
+			}
+		}
+	}
+
+	return length
 }
 
 func generatePossibilitiesForDirectionalPad(keypad [][]string, input string) [][]string {
@@ -98,7 +114,6 @@ func generatePossibilitiesForDirectionalPad(keypad [][]string, input string) [][
 	}
 
 	return output
-
 }
 
 func generateString(input [][]string) []string {
