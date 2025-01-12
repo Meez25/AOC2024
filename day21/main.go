@@ -65,9 +65,6 @@ func main() {
 		total += digitPart * minCost
 	}
 	fmt.Println("Part 2", total, "in", time.Since(start))
-	// result = convertDirToDir(result)
-	// result = convertDirToDir(result[:1])
-	// fmt.Println(len(result[0]))
 }
 
 type cacheKey struct {
