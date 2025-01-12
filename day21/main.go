@@ -7,8 +7,26 @@ import (
 	"strconv"
 )
 
-//go:embed "day21input.txt"
+//go:embed day21input.txt
 var inputFile []byte
+
+type Node struct {
+	value     string
+	direction string
+	x         int
+	y         int
+}
+
+type NodeVisitedSet struct {
+	value string
+	x     int
+	y     int
+}
+
+var directionalKeypad = [][]string{
+	{"", "^", "A"},
+	{"<", "v", ">"},
+}
 
 var numericKeypad = [][]string{
 	{"7", "8", "9"},
@@ -17,236 +35,221 @@ var numericKeypad = [][]string{
 	{"", "0", "A"},
 }
 
-var directionalKeypad = [][]string{
-	{"", "^", "A"},
-	{"<", "v", ">"},
+type direction struct {
+	direction [2]int
+	arrow     string
 }
 
-type Position struct {
-	x    int
-	y    int
-	path string
-}
-
-type VisitedPosition struct {
-	x int
-	y int
-}
-
-var Directions = [][]int{
-	{0, 1},  // DOWN
-	{1, 0},  // RIGHT
-	{-1, 0}, // LEFT
-	{0, -1}, // UP
+var directions = []direction{
+	{direction: [2]int{0, -1}, arrow: "^"}, // UP
+	{direction: [2]int{0, 1}, arrow: "v"},  // DOWN
+	{direction: [2]int{-1, 0}, arrow: "<"}, // LEFT
+	{direction: [2]int{1, 0}, arrow: ">"},  // RIGHT
 }
 
 func main() {
-	count := 0
-
+	// cache := make(map[string]int)
+	total := 0
 	for _, line := range bytes.Split(bytes.TrimSpace(inputFile), []byte("\n")) {
-		digit, _ := strconv.Atoi(string(line[:3]))
-		_ = digit
-		paths := generatePossibilitiesNumericalPad(numericKeypad, line)
-		possibilities := generateString(paths)
-		fmt.Println(possibilities)
-		length := goDeep(possibilities[0], 1)
-		fmt.Println(length)
-		length = goDeep(possibilities[1], 1)
-		fmt.Println(length)
-		length = goDeep(possibilities[2], 1)
-		fmt.Println(length)
-		// With the 3 possibilities, I should create a function that takes the string, and the depth,
-		// And checks resursively for each pair in the string what is the outcome at a deeper depth.
+		results := convertNumsToDir(string(line))
+		fmt.Println(results)
+		minCost := 0
+		for _, result := range results {
+			cost := convertToShortest(result, 2)
+			if cost < minCost || minCost == 0 {
+				minCost = cost
+			}
+		}
+		fmt.Println(minCost)
+		digitPart, _ := strconv.Atoi(string(line[:3]))
+		total += digitPart * minCost
 	}
-	fmt.Println(count)
+	fmt.Println(total)
+	// result = convertDirToDir(result)
+	// result = convertDirToDir(result[:1])
+	// fmt.Println(len(result[0]))
 }
 
-func goDeep(input string, depth int) int {
-	length := 0
+func convertToShortest(input string, depth int) int {
+	// fmt.Println("INPUT :", input, "DEPTH", depth)
 	if depth == 0 {
+		// fmt.Println("RETURNING", len(input))
 		return len(input)
 	}
-
-	for i := 0; i < len(input)-2; i += 2 {
-		// Generate the new input from the input
-		possibilities := generatePossibilitiesForDirectionalPad(directionalKeypad, input[i:i+2])
-		possibilitiesAsString := generateString(possibilities)
-		for _, possibility := range possibilitiesAsString {
-			for j := 0; j < len(possibility)-2; j += 2 {
-				lengthOfPair := goDeep(possibility[j:j+2], depth-1)
-				length += lengthOfPair
+	input = "A" + input
+	// Check the min cost of children
+	inputCost := 0
+	for i := 0; i < len(input)-1; i++ {
+		// For each 2 digits children of the INPUT
+		possibilities := numKeyDirToDirection(directionalKeypad, string(input[i]), string(input[i+1]))
+		// fmt.Println("POSSIBILITIES :", possibilities, "FOR", string(input[i]), string(input[i+1]))
+		minCost := 0
+		for _, possibility := range possibilities {
+			cost := convertToShortest(possibility, depth-1)
+			if cost < minCost || minCost == 0 {
+				minCost = cost
 			}
 		}
+		inputCost += minCost
 	}
 
-	return length
+	return inputCost
 }
 
-func generatePossibilitiesForDirectionalPad(keypad [][]string, input string) [][]string {
-	var output [][]string
-	current := Position{x: 2, y: 0}
-	for _, char := range input {
-		var targetX, targetY int
-		switch char {
-		case '^':
-			targetX, targetY = 1, 0
-		case '<':
-			targetX, targetY = 0, 1
-		case '>':
-			targetX, targetY = 2, 1
-		case 'v':
-			targetX, targetY = 1, 1
-		case 'A':
-			targetX, targetY = 2, 0
-		default:
-			continue
-		}
+func convertDirToDir(input []string) []string {
+	lists := make([]string, 0)
+	for _, word := range input {
+		results := make([]string, 0)
 
-		paths := findPathPossibility(keypad, current.x, current.y, targetX, targetY)
-		var pathToAdd []string
-		for _, path := range paths {
-			pathToAdd = append(pathToAdd, path.path)
-		}
-		output = append(output, pathToAdd)
+		current := "A"
 
-		current.x = targetX
-		current.y = targetY
-	}
-
-	return output
-}
-
-func generateString(input [][]string) []string {
-	// If there are no groups, return empty slice
-	if len(input) == 0 {
-		return []string{}
-	}
-
-	// Start with the paths from first group
-	result := make([]string, len(input[0]))
-	copy(result, input[0])
-
-	// For each subsequent group
-	for i := 1; i < len(input); i++ {
-		var newResult []string
-
-		// For each existing combination
-		for _, existing := range result {
-			// For each path in current group
-			for _, newPath := range input[i] {
-				// Create new combination
-				newResult = append(newResult, existing+newPath)
-			}
-		}
-		result = newResult
-	}
-
-	return result
-}
-
-func generatePossibilitiesNumericalPad(keypad [][]string, input []byte) [][]string {
-	var output [][]string
-	current := Position{x: 2, y: 3}
-	for _, char := range input {
-		var targetX, targetY int
-		switch char {
-		case '7':
-			targetX, targetY = 0, 0
-		case '8':
-			targetX, targetY = 1, 0
-		case '9':
-			targetX, targetY = 2, 0
-		case '4':
-			targetX, targetY = 0, 1
-		case '5':
-			targetX, targetY = 1, 1
-		case '6':
-			targetX, targetY = 2, 1
-		case '1':
-			targetX, targetY = 0, 2
-		case '2':
-			targetX, targetY = 1, 2
-		case '3':
-			targetX, targetY = 2, 2
-		case '0':
-			targetX, targetY = 1, 3
-		case 'A':
-			targetX, targetY = 2, 3
-		default:
-			continue
-		}
-
-		paths := findPathPossibility(keypad, current.x, current.y, targetX, targetY)
-		var pathToAdd []string
-		for _, path := range paths {
-			pathToAdd = append(pathToAdd, path.path)
-		}
-		output = append(output, pathToAdd)
-
-		current.x = targetX
-		current.y = targetY
-	}
-
-	return output
-}
-
-func findPathPossibility(keypad [][]string, startX, startY, endX, endY int) []Position {
-	queue := []Position{}
-	start := Position{startX, startY, ""}
-	queue = append(queue, start)
-	visited := map[VisitedPosition]int{}
-	visited[VisitedPosition{start.x, start.y}] = 0
-
-	shortestPaths := []Position{}
-	shortestLength := -1
-
-	for len(queue) > 0 {
-		v := queue[0]
-		queue = queue[1:]
-		if v.x == endX && v.y == endY {
-			if shortestLength == -1 {
-				shortestLength = len(v.path)
-				v.path += "A"
-				shortestPaths = append(shortestPaths, v)
-			} else if len(v.path) == shortestLength {
-				v.path += "A"
-				shortestPaths = append(shortestPaths, v)
-			}
-			continue
-		}
-		if shortestLength != -1 && len(v.path) > shortestLength {
-			continue
-		}
-		for _, direction := range Directions {
-			var directionArrow string
-			for i, dir := range Directions {
-				if dir[0] == direction[0] && dir[1] == direction[1] {
-					switch i {
-					case 0: // DOWN
-						directionArrow += "v"
-					case 1: // RIGHT
-						directionArrow += ">"
-					case 2: // LEFT
-						directionArrow += "<"
-					case 3: // UP
-						directionArrow += "^"
-					}
-					break
-				}
-			}
-			nextPosition := Position{x: v.x + direction[0], y: v.y + direction[1], path: v.path + directionArrow}
-			if nextPosition.y < 0 || nextPosition.y >= len(keypad) || nextPosition.x < 0 || nextPosition.x >= len(keypad[0]) || keypad[nextPosition.y][nextPosition.x] == "" {
+		for i := range word {
+			result := numKeyDirToDirection(directionalKeypad, current, string(word[i]))
+			if len(results) == 0 {
+				results = result
+				current = string(word[i])
 				continue
 			}
-			visitedPos := VisitedPosition{nextPosition.x, nextPosition.y}
-			// Allow revisiting if we found a path of the same length
-			pathLength := len(nextPosition.path)
-			if prevLength, exists := visited[visitedPos]; !exists || pathLength <= prevLength {
-				queue = append(queue, nextPosition)
-				visited[visitedPos] = pathLength
+
+			toReplace := make([]string, 0)
+
+			for i := range result {
+				for y := range results {
+					toReplace = append(toReplace, results[y]+result[i])
+				}
 			}
+			results = toReplace
+
+			current = string(word[i])
+		}
+		lists = append(lists, results...)
+	}
+	return lists
+}
+
+func convertNumsToDir(input string) []string {
+	results := make([]string, 0)
+
+	current := "A"
+
+	for i := range input {
+		result := numKeyPadToDirection(numericKeypad, current, string(input[i]))
+		if len(results) == 0 {
+			results = result
+			current = string(input[i])
+			continue
 		}
 
+		toReplace := make([]string, 0)
+
+		for i := range result {
+			for y := range results {
+				toReplace = append(toReplace, results[y]+result[i])
+			}
+		}
+		results = toReplace
+
+		current = string(input[i])
 	}
-	return shortestPaths
+	return results
+}
+
+func numKeyDirToDirection(directionalKeypad [][]string, startButton, wanted string) []string {
+	// Find all path to the wanted char
+	// Return a list of possibilities to navigate using arrow keys
+	queue := make([]Node, 0)
+	visited := make(map[string]bool)
+	var start Node
+
+	for y := range directionalKeypad {
+		for x := range directionalKeypad[y] {
+			if directionalKeypad[y][x] == startButton {
+				start = Node{value: startButton, direction: "", x: x, y: y}
+			}
+		}
+	}
+	queue = append(queue, start)
+	visited[start.direction] = true
+	possibilities := make([]string, 0)
+	shortestPath := 0
+
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+		if current.value == wanted {
+			if shortestPath == 0 || len(current.direction) <= shortestPath {
+				shortestPath = len(current.direction)
+				possibilities = append(possibilities, current.direction+"A")
+			} else {
+				return possibilities
+			}
+		}
+		for _, direction := range directions {
+			nextX := current.x + direction.direction[0]
+			nextY := current.y + direction.direction[1]
+			if nextX > len(directionalKeypad[0])-1 || nextX < 0 || nextY > len(directionalKeypad)-1 || nextY < 0 {
+				continue
+			}
+			nextNode := Node{value: directionalKeypad[nextY][nextX], direction: current.direction + direction.arrow, x: nextX, y: nextY}
+			if nextNode.value == "" {
+				continue
+			}
+			if visited[nextNode.direction] == true {
+				continue
+			}
+			queue = append(queue, nextNode)
+			visited[nextNode.direction] = true
+		}
+	}
+	return possibilities
+}
+
+func numKeyPadToDirection(numericPad [][]string, startButton, wanted string) []string {
+	// Find all path to the wanted char
+	// Return a list of possibilities to navigate using arrow keys
+	queue := make([]Node, 0)
+	visited := make(map[string]bool)
+	var start Node
+
+	for y := range numericPad {
+		for x := range numericPad[y] {
+			if numericPad[y][x] == startButton {
+				start = Node{value: startButton, direction: "", x: x, y: y}
+			}
+		}
+	}
+	queue = append(queue, start)
+	visited[start.direction] = true
+	possibilities := make([]string, 0)
+	shortestPath := 0
+
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+		if current.value == wanted {
+			if shortestPath == 0 || len(current.direction) <= shortestPath {
+				shortestPath = len(current.direction)
+				possibilities = append(possibilities, current.direction+"A")
+			} else {
+				return possibilities
+			}
+		}
+		for _, direction := range directions {
+			nextX := current.x + direction.direction[0]
+			nextY := current.y + direction.direction[1]
+			if nextX > len(numericKeypad[0])-1 || nextX < 0 || nextY > len(numericKeypad)-1 || nextY < 0 {
+				continue
+			}
+			nextNode := Node{value: numericPad[nextY][nextX], direction: current.direction + direction.arrow, x: nextX, y: nextY}
+			if nextNode.value == "" {
+				continue
+			}
+			if visited[nextNode.direction] == true {
+				continue
+			}
+			queue = append(queue, nextNode)
+			visited[nextNode.direction] = true
+		}
+	}
+	return possibilities
 }
