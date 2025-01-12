@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 	"strconv"
+	"time"
 )
 
 //go:embed day21input.txt
@@ -48,32 +49,39 @@ var directions = []direction{
 }
 
 func main() {
-	// cache := make(map[string]int)
+	start := time.Now()
 	total := 0
+	cache := make(map[cacheKey]int, 0)
 	for _, line := range bytes.Split(bytes.TrimSpace(inputFile), []byte("\n")) {
 		results := convertNumsToDir(string(line))
-		fmt.Println(results)
 		minCost := 0
 		for _, result := range results {
-			cost := convertToShortest(result, 2)
+			cost := convertToShortest(result, 25, cache)
 			if cost < minCost || minCost == 0 {
 				minCost = cost
 			}
 		}
-		fmt.Println(minCost)
 		digitPart, _ := strconv.Atoi(string(line[:3]))
 		total += digitPart * minCost
 	}
-	fmt.Println(total)
+	fmt.Println("Part 2", total, "in", time.Since(start))
 	// result = convertDirToDir(result)
 	// result = convertDirToDir(result[:1])
 	// fmt.Println(len(result[0]))
 }
 
-func convertToShortest(input string, depth int) int {
-	// fmt.Println("INPUT :", input, "DEPTH", depth)
+type cacheKey struct {
+	input string
+	depth int
+}
+
+func convertToShortest(input string, depth int, cache map[cacheKey]int) int {
+	key := cacheKey{input, depth}
+	if val, ok := cache[key]; ok {
+		return val
+	}
 	if depth == 0 {
-		// fmt.Println("RETURNING", len(input))
+		cache[key] = len(input)
 		return len(input)
 	}
 	input = "A" + input
@@ -82,10 +90,9 @@ func convertToShortest(input string, depth int) int {
 	for i := 0; i < len(input)-1; i++ {
 		// For each 2 digits children of the INPUT
 		possibilities := numKeyDirToDirection(directionalKeypad, string(input[i]), string(input[i+1]))
-		// fmt.Println("POSSIBILITIES :", possibilities, "FOR", string(input[i]), string(input[i+1]))
 		minCost := 0
 		for _, possibility := range possibilities {
-			cost := convertToShortest(possibility, depth-1)
+			cost := convertToShortest(possibility, depth-1, cache)
 			if cost < minCost || minCost == 0 {
 				minCost = cost
 			}
@@ -93,6 +100,7 @@ func convertToShortest(input string, depth int) int {
 		inputCost += minCost
 	}
 
+	cache[key] = inputCost
 	return inputCost
 }
 
