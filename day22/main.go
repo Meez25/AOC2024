@@ -11,9 +11,17 @@ import (
 //go:embed inputday22.txt
 var inputFile []byte
 
+type Key struct {
+	one   int
+	two   int
+	three int
+	four  int
+}
+
 func main() {
 	sum := 0
 	start := time.Now()
+	pricesMap := make(map[Key]int)
 	for _, line := range bytes.Split(bytes.TrimSpace(inputFile), []byte("\n")) {
 		prices := make([]int, 2001)
 		startingSecret, err := strconv.Atoi(string(line))
@@ -27,16 +35,32 @@ func main() {
 		}
 		sum += startingSecret
 		pricesChanges := convertPricesToPriceChange(prices)
-		possibilities := findBestCombinaisons(prices, pricesChanges)
-		fmt.Println(possibilities)
+		pricesMap = findBestCombinaisons(prices, pricesChanges, pricesMap)
+		// fmt.Println(pricesMap)
+	}
+	max := 0
+	for _, v := range pricesMap {
+		if v > max {
+			max = v
+		}
 	}
 	fmt.Println("Part 1", sum, "in", time.Since(start))
+	fmt.Println("Part 2", max, "in", time.Since(start))
 }
 
-func findBestCombinaisons(prices, pricesChanges []int) []int {
+func findBestCombinaisons(prices, pricesChanges []int, pricesMap map[Key]int) map[Key]int {
 	prices = prices[1:]
-	fmt.Println(prices[0], pricesChanges[0])
-	return []int{}
+	seen := make(map[Key]bool)
+	// fmt.Println(prices[0], pricesChanges[0])
+	for i := 0; i < len(prices)-4; i++ {
+		key := Key{one: pricesChanges[i], two: pricesChanges[i+1], three: pricesChanges[i+2], four: pricesChanges[i+3]}
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		pricesMap[key] += prices[i+3] % 10
+		seen[key] = true
+	}
+	return pricesMap
 }
 
 func mix(secret, toMixWith int) int {
