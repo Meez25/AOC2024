@@ -140,34 +140,6 @@ func getChild(graph map[string][]string, current string) []string {
 	return graph[current]
 }
 
-// func countIslandOfThree(graph map[string][]string) int {
-// 	// Run DPS on each line
-// 	// Keep track on a visited SET
-// 	// Add 1 to count if the size of the island is 3 and if a port start with a "t"
-// 	visited := make(map[string]bool)
-// 	count := 0
-// 	for key := range graph {
-// 		fmt.Println(explore(graph, key, visited))
-// 		if explore(graph, key, visited) == 3 {
-// 			count++
-// 		}
-// 	}
-// 	return count
-// }
-
-// func explore(graph map[string][]string, current string, visited map[string]bool) int {
-// 	if visited[current] {
-// 		return 0
-// 	}
-//
-// 	count := 0
-// 	visited[current] = true
-// 	for _, neighbor := range graph[current] {
-// 		count += explore(graph, neighbor, visited)
-// 	}
-// 	return count + 1
-// }
-
 func buildGraph(input []byte) map[string][]string {
 	graph := make(map[string][]string)
 	for _, line := range bytes.Split(bytes.TrimSpace(input), []byte("\n")) {
